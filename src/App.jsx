@@ -228,23 +228,13 @@ function App() {
           const fullDownloadUrl = file.downloadUrl.startsWith('http')
             ? file.downloadUrl
             : `${API_BASE}${file.downloadUrl}`;
-          // Fetch the file to check response type
-          const response = await fetch(fullDownloadUrl);
-          const contentType = response.headers.get('content-type');
-          if (response.ok && contentType && contentType.includes('text/csv')) {
-            const blob = await response.blob();
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = file.filename.replace(/\.pdf$/i, '.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setDownloadUrl(fullDownloadUrl);
-          } else {
-            const errorText = await response.text();
-            setError('Download failed: ' + errorText);
-            console.error('Download error response:', errorText);
-          }
+          const link = document.createElement('a');
+          link.href = fullDownloadUrl;
+          link.download = file.filename.replace(/\.pdf$/i, '.csv');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setDownloadUrl(fullDownloadUrl);
         } else {
           setError('CSV file not found for this job.');
         }
