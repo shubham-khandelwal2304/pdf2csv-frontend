@@ -40,8 +40,12 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
       return;
     }
     try {
+      const API_BASE = import.meta.env.VITE_API_BASE;
+      const fullDownloadUrl = file.downloadUrl.startsWith('http')
+        ? file.downloadUrl
+        : `${API_BASE}${file.downloadUrl}`;
       const link = document.createElement('a');
-      link.href = file.downloadUrl;
+      link.href = fullDownloadUrl;
       link.download = file.filename.replace(/\.pdf$/i, '.csv');
       document.body.appendChild(link);
       link.click();

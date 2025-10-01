@@ -224,8 +224,12 @@ function App() {
         const filesResponse = await getAllFiles();
         const file = filesResponse.files.find(f => f.jobId === jobId);
         if (file && file.downloadUrl) {
+          const API_BASE = import.meta.env.VITE_API_BASE;
+          const fullDownloadUrl = file.downloadUrl.startsWith('http')
+            ? file.downloadUrl
+            : `${API_BASE}${file.downloadUrl}`;
           // Fetch the file to check response type
-          const response = await fetch(file.downloadUrl);
+          const response = await fetch(fullDownloadUrl);
           const contentType = response.headers.get('content-type');
           if (response.ok && contentType && contentType.includes('text/csv')) {
             const blob = await response.blob();
@@ -235,7 +239,7 @@ function App() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            setDownloadUrl(file.downloadUrl);
+            setDownloadUrl(fullDownloadUrl);
           } else {
             const errorText = await response.text();
             setError('Download failed: ' + errorText);
