@@ -56,16 +56,26 @@ function App() {
     
     if (data.type === 'update') {
       setStatus(data.status);
-      
+
       if (data.status === 'completed') {
         setIsPolling(false);
-        setDownloadUrl(data.downloadUrl);
-        
-        // Automatically trigger download like sidebar does
-        if (data.downloadUrl) {
-          window.open(data.downloadUrl, '_blank');
+        // Fetch file list and set downloadUrl to the full backend URL for the matching file
+        try {
+          const filesResponse = await getAllFiles();
+          const file = filesResponse.files.find(f => f.jobId === data.jobId);
+          if (file && file.downloadUrl) {
+            const API_BASE = import.meta.env.VITE_API_BASE;
+            const fullDownloadUrl = file.downloadUrl.startsWith('http')
+              ? file.downloadUrl
+              : `${API_BASE}${file.downloadUrl}`;
+            setDownloadUrl(fullDownloadUrl);
+          } else {
+            setDownloadUrl(null);
+          }
+        } catch (err) {
+          setDownloadUrl(null);
         }
-        
+
         updateStoredJob(data.jobId, {
           status: 'done',
           downloadUrl: data.downloadUrl,
@@ -74,7 +84,7 @@ function App() {
       } else if (data.status === 'error') {
         setIsPolling(false);
         setError(data.error);
-        
+
         updateStoredJob(data.jobId, {
           status: 'error',
           error: data.error
@@ -91,34 +101,40 @@ function App() {
       try {
         console.log('Fallback polling job status for:', jobId);
         const jobStatus = await getJobStatus(jobId);
-        
+
         if (jobStatus.ready && jobStatus.status === 'done') {
           console.log('Job completed via fallback polling');
           setStatus('done');
           setIsPolling(false);
-          
-          // Get download URL and trigger automatic download
+
+          // Fetch file list and set downloadUrl to the full backend URL for the matching file
           try {
-            const downloadData = await getDownloadUrl(jobId);
-            setDownloadUrl(downloadData.url);
-            
-            // Automatically trigger download like sidebar does
-            window.open(downloadData.url, '_blank');
-            
-            updateStoredJob(jobId, {
-              status: 'done',
-              downloadUrl: downloadData.url,
-              ready: true
-            });
-          } catch (downloadError) {
-            console.error('Failed to get download URL:', downloadError);
+            const filesResponse = await getAllFiles();
+            const file = filesResponse.files.find(f => f.jobId === jobId);
+            if (file && file.downloadUrl) {
+              const API_BASE = import.meta.env.VITE_API_BASE;
+              const fullDownloadUrl = file.downloadUrl.startsWith('http')
+                ? file.downloadUrl
+                : `${API_BASE}${file.downloadUrl}`;
+              setDownloadUrl(fullDownloadUrl);
+            } else {
+              setDownloadUrl(null);
+            }
+          } catch (err) {
+            setDownloadUrl(null);
           }
+
+          updateStoredJob(jobId, {
+            status: 'done',
+            downloadUrl: jobStatus.downloadUrl,
+            ready: true
+          });
         } else if (jobStatus.status === 'error') {
           console.log('Job failed via fallback polling');
           setStatus('error');
           setIsPolling(false);
           setError(jobStatus.error || 'Job failed');
-          
+
           updateStoredJob(jobId, {
             status: 'error',
             error: jobStatus.error || 'Job failed'
@@ -126,30 +142,23 @@ function App() {
         }
       } catch (error) {
         console.error('Fallback polling error:', error);
-        
+
         // If job not found (404), stop polling and clean up
         if (error instanceof ApiError && error.status === 404) {
           console.log('Job not found, cleaning up and stopping polling');
           setIsPolling(false);
-          
+
           // Clean up invalid job from localStorage
           localStorage.removeItem(`job_${jobId}`);
           const jobList = JSON.parse(localStorage.getItem('pdf_csv_jobs') || '[]');
           const updatedJobList = jobList.filter(id => id !== jobId);
           localStorage.setItem('pdf_csv_jobs', JSON.stringify(updatedJobList));
-          
-          // Try to get download URL as fallback
-          try {
-            const downloadData = await getDownloadUrl(jobId);
-            setDownloadUrl(downloadData.url);
-            setStatus('done');
-            window.open(downloadData.url, '_blank');
-          } catch (downloadError) {
-            // If download also fails, reset to allow new upload
-            console.log('Download not available, resetting state');
-            resetState();
-            setError('Job not found. It may have expired. Please upload again.');
-          }
+
+          setDownloadUrl(null);
+          // If download also fails, reset to allow new upload
+          console.log('Download not available, resetting state');
+          resetState();
+          setError('Job not found. It may have expired. Please upload again.');
         }
       }
     }, 5000); // Poll every 5 seconds
