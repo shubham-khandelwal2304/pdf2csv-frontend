@@ -2,7 +2,7 @@
  * API client for PDF2CSV backend
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_BASE ;
 
 class ApiError extends Error {
   constructor(message, status, code) {
