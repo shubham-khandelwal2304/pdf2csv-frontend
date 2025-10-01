@@ -224,13 +224,23 @@ function App() {
         const filesResponse = await getAllFiles();
         const file = filesResponse.files.find(f => f.jobId === jobId);
         if (file && file.downloadUrl) {
-          const link = document.createElement('a');
-          link.href = file.downloadUrl;
-          link.download = file.filename.replace(/\.pdf$/i, '.csv');
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          setDownloadUrl(file.downloadUrl);
+          // Fetch the file to check response type
+          const response = await fetch(file.downloadUrl);
+          const contentType = response.headers.get('content-type');
+          if (response.ok && contentType && contentType.includes('text/csv')) {
+            const blob = await response.blob();
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = file.filename.replace(/\.pdf$/i, '.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setDownloadUrl(file.downloadUrl);
+          } else {
+            const errorText = await response.text();
+            setError('Download failed: ' + errorText);
+            console.error('Download error response:', errorText);
+          }
         } else {
           setError('CSV file not found for this job.');
         }
