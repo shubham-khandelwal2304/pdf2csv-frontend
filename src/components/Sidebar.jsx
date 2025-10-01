@@ -42,7 +42,12 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
 
     try {
       const downloadData = await getDownloadUrl(file.jobId);
-      window.open(downloadData.url, '_blank');
+      const link = document.createElement('a');
+      link.href = downloadData.url;
+      link.download = file.filename.replace(/\.pdf$/i, '.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (err) {
       console.error('Download failed:', err);
       setError(err instanceof ApiError ? err.message : 'Download failed');

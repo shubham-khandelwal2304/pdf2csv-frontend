@@ -219,13 +219,23 @@ function App() {
 
   const handleDownload = useCallback(async () => {
     if (downloadUrl) {
-      console.log('Opening download URL:', downloadUrl);
-      window.open(downloadUrl, '_blank');
+      console.log('Downloading file from URL:', downloadUrl);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename ? filename.replace(/\.pdf$/i, '.csv') : 'download.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } else if (jobId) {
       // Fallback: try to get download URL if not available
       try {
         const downloadData = await getDownloadUrl(jobId);
-        window.open(downloadData.url, '_blank');
+        const link = document.createElement('a');
+        link.href = downloadData.url;
+        link.download = filename ? filename.replace(/\.pdf$/i, '.csv') : 'download.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         setDownloadUrl(downloadData.url);
       } catch (error) {
         console.error('Failed to get download URL:', error);
