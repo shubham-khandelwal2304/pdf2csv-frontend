@@ -35,22 +35,20 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   }, [fetchFiles]);
 
   const handleDownload = useCallback(async (file) => {
-    if (!file.jobId) {
-      setError('No job ID available for download');
+    if (!file.downloadUrl) {
+      setError('No download URL available for this file');
       return;
     }
-
     try {
-      const downloadData = await getDownloadUrl(file.jobId);
       const link = document.createElement('a');
-      link.href = downloadData.url;
+      link.href = file.downloadUrl;
       link.download = file.filename.replace(/\.pdf$/i, '.csv');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (err) {
       console.error('Download failed:', err);
-      setError(err instanceof ApiError ? err.message : 'Download failed');
+      setError('Download failed');
     }
   }, []);
 

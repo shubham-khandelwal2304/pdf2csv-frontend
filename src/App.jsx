@@ -218,29 +218,28 @@ function App() {
   }, []);
 
   const handleDownload = useCallback(async () => {
-    if (downloadUrl) {
-      console.log('Downloading file from URL:', downloadUrl);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = filename ? filename.replace(/\.pdf$/i, '.csv') : 'download.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else if (jobId) {
-      // Fallback: try to get download URL if not available
+    if (jobId) {
       try {
-        const downloadData = await getDownloadUrl(jobId);
-        const link = document.createElement('a');
-        link.href = downloadData.url;
-        link.download = filename ? filename.replace(/\.pdf$/i, '.csv') : 'download.csv';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setDownloadUrl(downloadData.url);
+        // Get all files and find the one with matching jobId
+        const filesResponse = await getAllFiles();
+        const file = filesResponse.files.find(f => f.jobId === jobId);
+        if (file && file.downloadUrl) {
+          const link = document.createElement('a');
+          link.href = file.downloadUrl;
+          link.download = file.filename.replace(/\.pdf$/i, '.csv');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setDownloadUrl(file.downloadUrl);
+        } else {
+          setError('CSV file not found for this job.');
+        }
       } catch (error) {
-        console.error('Failed to get download URL:', error);
+        console.error('Failed to get file for download:', error);
         setError('Failed to download file. Please try again.');
       }
+    } else {
+      setError('No job selected for download.');
     }
   }, [downloadUrl, jobId]);
 
