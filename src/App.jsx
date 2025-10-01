@@ -10,7 +10,8 @@ import {
   ApiError, 
   getAllStoredJobs, 
   cleanupStoredJobs,
-  updateStoredJob 
+  updateStoredJob,
+  getAllFiles 
 } from './api';
 
 function App() {
@@ -227,34 +228,40 @@ function App() {
   }, []);
 
   const handleDownload = useCallback(async () => {
-    if (jobId) {
-      try {
-        // Get all files and find the one with matching jobId
-        const filesResponse = await getAllFiles();
-        const file = filesResponse.files.find(f => f.jobId === jobId);
-        if (file && file.downloadUrl) {
-          const API_BASE = import.meta.env.VITE_API_BASE;
-          const fullDownloadUrl = file.downloadUrl.startsWith('http')
-            ? file.downloadUrl
-            : `${API_BASE}${file.downloadUrl}`;
-          const link = document.createElement('a');
-          link.href = fullDownloadUrl;
-          link.download = file.filename.replace(/\.pdf$/i, '.csv');
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          setDownloadUrl(fullDownloadUrl);
-        } else {
-          setError('CSV file not found for this job.');
-        }
-      } catch (error) {
-        console.error('Failed to get file for download:', error);
-        setError('Failed to download file. Please try again.');
-      }
-    } else {
+    if (!jobId) {
       setError('No job selected for download.');
+      return;
     }
-  }, [downloadUrl, jobId]);
+
+    try {
+      // Get all files and find the one with matching jobId
+      const filesResponse = await getAllFiles();
+      const file = filesResponse.files.find(f => f.jobId === jobId);
+      
+      if (!file || !file.downloadUrl) {
+        setError('CSV file not found for this job.');
+        return;
+      }
+
+      const API_BASE = import.meta.env.VITE_API_BASE;
+      const fullDownloadUrl = file.downloadUrl.startsWith('http')
+        ? file.downloadUrl
+        : `${API_BASE}${file.downloadUrl}`;
+      
+      const link = document.createElement('a');
+      link.href = fullDownloadUrl;
+      link.download = file.filename.replace(/\.pdf$/i, '.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Update the downloadUrl state for consistency
+      setDownloadUrl(fullDownloadUrl);
+    } catch (error) {
+      console.error('Failed to get file for download:', error);
+      setError('Failed to download file. Please try again.');
+    }
+  }, [jobId]);
 
   const handleSidebarToggle = useCallback(() => {
     setSidebarOpen(prev => !prev);
