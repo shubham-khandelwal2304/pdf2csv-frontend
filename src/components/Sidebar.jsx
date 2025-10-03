@@ -14,16 +14,18 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
     setLoading(true);
     setError(null);
     try {
-      // Mock API call - replace with actual API
-      const mockResponse = {
-        files: [],
-        totalFiles: 0,
-        formattedTotalSize: '0 Bytes'
-      };
-      setFiles(mockResponse.files || []);
+      const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
+      const response = await fetch(`${apiBase}/api/files`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch files: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setFiles(data.files || []);
       setStats({
-        totalFiles: mockResponse.totalFiles || 0,
-        formattedTotalSize: mockResponse.formattedTotalSize || '0 Bytes'
+        totalFiles: data.totalFiles || 0,
+        formattedTotalSize: data.formattedTotalSize || '0 Bytes'
       });
     } catch (err) {
       console.error('Failed to fetch files:', err);
@@ -69,8 +71,15 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
     }
     setDeletingFiles(prev => new Set([...prev, file.id]));
     try {
-      // Mock delete - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
+      const response = await fetch(`${apiBase}/api/files/${file.id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete file: ${response.status} ${response.statusText}`);
+      }
+      
       // Remove from local state
       setFiles(prev => prev.filter(f => f.id !== file.id));
       setStats(prev => ({

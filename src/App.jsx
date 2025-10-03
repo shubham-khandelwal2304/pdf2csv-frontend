@@ -137,9 +137,22 @@ const PDFtoCSV = () => {
         const response = await fetch(`${BACKEND_URL}/api/jobs/${jobId}/status`)
         const result = await response.json()
         
-        if (result.ready && result.downloadUrl) {
+        if (result.ready) {
+          // Get download URL from separate endpoint
+          try {
+            const downloadResponse = await fetch(`${BACKEND_URL}/api/jobs/${jobId}/download-url`)
+            if (downloadResponse.ok) {
+              const downloadData = await downloadResponse.json()
+              setIsProcessing(false)
+              setDownloadUrl(downloadData.url)
+              return
+            }
+          } catch (downloadErr) {
+            console.error('Failed to get download URL:', downloadErr)
+          }
+          // Fallback: set a placeholder URL
           setIsProcessing(false)
-          setDownloadUrl(result.downloadUrl)
+          setDownloadUrl(`${BACKEND_URL}/api/jobs/${jobId}/download-url`)
           return
         } else if (result.status === 'error') {
           throw new Error(result.error || 'Conversion failed')
@@ -159,14 +172,36 @@ const PDFtoCSV = () => {
     poll()
   }, [])
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async () => {
     if (downloadUrl) {
-      const link = document.createElement('a')
-      link.href = downloadUrl
-      link.download = file?.name?.replace('.pdf', '.csv') || 'converted-file.csv'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      try {
+        // If it's a direct URL, use it directly
+        if (downloadUrl.startsWith('http')) {
+          const link = document.createElement('a')
+          link.href = downloadUrl
+          link.download = file?.name?.replace('.pdf', '.csv') || 'converted-file.csv'
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        } else {
+          // If it's an API endpoint, fetch the actual download URL
+          const response = await fetch(downloadUrl)
+          if (response.ok) {
+            const data = await response.json()
+            const link = document.createElement('a')
+            link.href = data.url
+            link.download = data.filename || file?.name?.replace('.pdf', '.csv') || 'converted-file.csv'
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+          } else {
+            throw new Error('Failed to get download URL')
+          }
+        }
+      } catch (err) {
+        console.error('Download failed:', err)
+        setError('Download failed. Please try again.')
+      }
     }
   }, [downloadUrl, file])
 
