@@ -41,7 +41,7 @@ const PDFtoCSV = () => {
   const [dragActive, setDragActive] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   
-  const BACKEND_URL = 'https://csv-backend-oyvb.onrender.com'
+  const BACKEND_URL = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com'
 
   const handleFileSelectFromInput = useCallback((selectedFile) => {
     if (selectedFile && selectedFile.type === 'application/pdf') {
@@ -94,7 +94,7 @@ const PDFtoCSV = () => {
 
       console.log('Uploading file to backend:', BACKEND_URL)
       
-      const response = await fetch(`${BACKEND_URL}/upload`, {
+      const response = await fetch(`${BACKEND_URL}/api/jobs`, {
         method: 'POST',
         body: formData
       })
@@ -134,14 +134,14 @@ const PDFtoCSV = () => {
     
     const poll = async () => {
       try {
-        const response = await fetch(`${BACKEND_URL}/status/${jobId}`)
+        const response = await fetch(`${BACKEND_URL}/api/jobs/${jobId}/status`)
         const result = await response.json()
         
-        if (result.status === 'completed' && result.downloadUrl) {
+        if (result.ready && result.downloadUrl) {
           setIsProcessing(false)
           setDownloadUrl(result.downloadUrl)
           return
-        } else if (result.status === 'failed') {
+        } else if (result.status === 'error') {
           throw new Error(result.error || 'Conversion failed')
         } else if (attempts >= maxAttempts) {
           throw new Error('Conversion timeout. Please try again.')
