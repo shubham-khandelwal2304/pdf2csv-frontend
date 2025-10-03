@@ -14,7 +14,7 @@ export function useJobEvents(jobId, onUpdate) {
   useEffect(() => {
     if (!jobId || !onUpdate) return;
 
-    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+    const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
     
     const connectSSE = () => {
       if (connectionAttempts >= maxRetries) {

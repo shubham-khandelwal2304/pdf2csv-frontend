@@ -2,7 +2,7 @@
  * API client for PDF2CSV backend
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE ;
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
 
 class ApiError extends Error {
   constructor(message, status, code) {
