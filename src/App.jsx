@@ -283,7 +283,7 @@ function App() {
         onToggle={handleSidebarToggle}
         onFileSelect={handleFileSelect}
       />
-      
+
       <div className="w-full max-w-4xl mx-auto">
         <header className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white text-shadow">
@@ -294,6 +294,20 @@ function App() {
           </p>
         </header>
 
+        {/* Flatten PDF Section */}
+        <div className="card p-6 mb-8 bg-yellow-50 border-l-4 border-yellow-400">
+          <h2 className="text-2xl font-semibold mb-3 text-yellow-800">Flatten your PDF before processing to CSV</h2>
+          <p className="mb-4 text-yellow-700">If your PDF contains forms, layers, or annotations, flattening it can improve conversion accuracy.</p>
+          <a
+            href="https://www.sejda.com/flatten-pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-success text-lg px-6 py-3"
+          >
+            Flatten PDF Online
+          </a>
+        </div>
+
         <main className="w-full">
           <div className="card p-8 mb-8">
             {!status && (
@@ -302,7 +316,7 @@ function App() {
                   onUpload={handleUpload}
                   disabled={isDisabled}
                 />
-                
+
                 {storedJobs.length > 0 && (
                   <div className="mt-8 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                     <h3 className="text-lg font-semibold text-gray-800 mb-3">Recent Jobs</h3>
