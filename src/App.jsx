@@ -175,11 +175,15 @@ const PDFtoCSV = () => {
   const handleDownload = useCallback(async () => {
     if (downloadUrl) {
       try {
+        // Use the same download logic as the sidebar
+        const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
+        
         // If it's a direct URL, use it directly
         if (downloadUrl.startsWith('http')) {
           const link = document.createElement('a')
           link.href = downloadUrl
           link.download = file?.name?.replace('.pdf', '.csv') || 'converted-file.csv'
+          link.target = '_blank' // Open in new tab as fallback
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
@@ -191,6 +195,7 @@ const PDFtoCSV = () => {
             const link = document.createElement('a')
             link.href = data.url
             link.download = data.filename || file?.name?.replace('.pdf', '.csv') || 'converted-file.csv'
+            link.target = '_blank' // Open in new tab as fallback
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
@@ -494,9 +499,9 @@ const PDFtoCSV = () => {
                   borderRadius: 2,
                   fontWeight: 600,
                   fontSize: 16,
-                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  background: 'linear-gradient(135deg, #8E54F7 0%, #7C3AED 100%)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)',
                   }
                 }}
               >

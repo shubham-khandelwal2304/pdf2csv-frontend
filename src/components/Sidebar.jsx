@@ -187,7 +187,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-              📁 PDF Files
+              📁 CSV Files
             </Typography>
             <IconButton
               onClick={handleRefresh}
@@ -253,7 +253,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
           {/* Files List */}
           <List sx={{ p: 0 }}>
             {files.map((file) => (
-              <ListItem
+              <Box
                 key={file.id}
                 sx={{
                   backgroundColor: 'rgba(142, 84, 247, 0.1)',
@@ -261,48 +261,55 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
                   borderColor: 'rgba(142, 84, 247, 0.3)',
                   borderRadius: 2,
                   mb: 1,
+                  p: 2,
                   cursor: 'pointer',
                   '&:hover': {
                     backgroundColor: 'rgba(142, 84, 247, 0.2)',
                     borderColor: 'rgba(142, 84, 247, 0.5)',
-                    '& .file-actions': {
-                      opacity: 1,
-                    },
                   },
                 }}
                 onClick={() => handleFileClick(file)}
               >
-                <ListItemIcon>
-                  <FileText size={20} color="#8E54F7" />
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Typography variant="subtitle2" sx={{ fontWeight: 500, color: '#fff' }}>
+                {/* File Info Section */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                  <FileText size={20} color="#8E54F7" style={{ marginRight: 12 }} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        fontWeight: 500, 
+                        color: '#fff',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
                       {file.filename}
                     </Typography>
-                  }
-                  secondary={
-                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                      Size: {file.formattedSize} • Date: {file.formattedDate}
+                    <Typography 
+                      variant="caption" 
+                      sx={{ color: 'rgba(255,255,255,0.7)' }}
+                    >
+                      Size: {file.formattedSize}
                     </Typography>
-                  }
-                />
-                <Box
-                  className="file-actions"
-                  sx={{
-                    opacity: 0,
-                    transition: 'opacity 0.2s',
-                    display: 'flex',
-                    gap: 0.5,
-                  }}
-                >
+                  </Box>
+                </Box>
+                
+                {/* Action Buttons Section */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                   <IconButton
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDownload(file);
                     }}
-                    sx={{ color: '#8E54F7' }}
+                    sx={{ 
+                      color: '#8E54F7',
+                      backgroundColor: 'rgba(142, 84, 247, 0.1)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(142, 84, 247, 0.2)',
+                      }
+                    }}
                     title="Download"
                   >
                     <Download size={16} />
@@ -314,7 +321,13 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
                       handleDelete(file);
                     }}
                     disabled={deletingFiles.has(file.id)}
-                    sx={{ color: '#EF4444' }}
+                    sx={{ 
+                      color: '#EF4444',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                      }
+                    }}
                     title="Delete File"
                   >
                     {deletingFiles.has(file.id) ? (
@@ -324,7 +337,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
                     )}
                   </IconButton>
                 </Box>
-              </ListItem>
+              </Box>
             ))}
           </List>
         </Box>
