@@ -37,6 +37,7 @@ const PDFtoCSV = () => {
   const [isUploading, setIsUploading] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState(null)
+  const [currentJobId, setCurrentJobId] = useState(null)
   const [error, setError] = useState(null)
   const [dragActive, setDragActive] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -114,6 +115,8 @@ const PDFtoCSV = () => {
         setIsProcessing(false)
         setDownloadUrl(result.downloadUrl)
       } else if (result.jobId) {
+        // Store job ID for download
+        setCurrentJobId(result.jobId)
         // Poll for completion
         await pollForCompletion(result.jobId)
       } else {
@@ -138,29 +141,10 @@ const PDFtoCSV = () => {
         const result = await response.json()
         
         if (result.ready) {
-          // Use the download URL from the job status response
-          if (result.downloadUrl) {
-            setIsProcessing(false)
-            setDownloadUrl(result.downloadUrl)
-            return
-          } else {
-            // Fallback: get download URL from separate endpoint
-            try {
-              const downloadResponse = await fetch(`${BACKEND_URL}/api/jobs/${jobId}/download-url`)
-              if (downloadResponse.ok) {
-                const downloadData = await downloadResponse.json()
-                setIsProcessing(false)
-                setDownloadUrl(downloadData.url)
-                return
-              }
-            } catch (downloadErr) {
-              console.error('Failed to get download URL:', downloadErr)
-            }
-            // Final fallback: set a placeholder URL
-            setIsProcessing(false)
-            setDownloadUrl(`${BACKEND_URL}/api/jobs/${jobId}/download-url`)
-            return
-          }
+          // Job is ready, we can now download
+          setIsProcessing(false)
+          setDownloadUrl('ready') // Set a flag that download is ready
+          return
         } else if (result.status === 'error') {
           throw new Error(result.error || 'Conversion failed')
         } else if (attempts >= maxAttempts) {
@@ -180,11 +164,22 @@ const PDFtoCSV = () => {
   }, [])
 
   const handleDownload = useCallback(async () => {
-    if (downloadUrl) {
+    if (downloadUrl && currentJobId) {
       try {
-        // For main uploader, use the downloadUrl directly as it comes from the job system
+        const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
+        
+        // Get the file ID from the job by calling the download-url endpoint
+        const response = await fetch(`${apiBase}/api/jobs/${currentJobId}/download-url`);
+        if (!response.ok) {
+          throw new Error('Failed to get download URL');
+        }
+        
+        const data = await response.json();
+        const directDownloadUrl = data.url;
+        
+        // Create a temporary link to trigger download
         const link = document.createElement('a');
-        link.href = downloadUrl;
+        link.href = directDownloadUrl;
         link.download = file?.name?.replace('.pdf', '.csv') || 'converted-file.csv';
         link.target = '_blank'; // Open in new tab as fallback
         document.body.appendChild(link);
@@ -195,11 +190,12 @@ const PDFtoCSV = () => {
         setError('Download failed. Please try again.');
       }
     }
-  }, [downloadUrl, file])
+  }, [downloadUrl, currentJobId, file])
 
   const handleReset = useCallback(() => {
     setFile(null)
     setDownloadUrl(null)
+    setCurrentJobId(null)
     setError(null)
     setIsUploading(false)
     setIsProcessing(false)
