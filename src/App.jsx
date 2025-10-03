@@ -175,9 +175,19 @@ const PDFtoCSV = () => {
         }
         
         const data = await response.json();
-        const directDownloadUrl = data.url;
         
-        // Create a temporary link to trigger download
+        // Extract file ID from the download URL (same logic as sidebar)
+        const fileIdMatch = data.url.match(/\/api\/files\/download\/(.+)$/);
+        if (!fileIdMatch) {
+          throw new Error('Invalid download URL format');
+        }
+        
+        const fileId = fileIdMatch[1];
+        
+        // Use the EXACT same download logic as the sidebar
+        const directDownloadUrl = `${apiBase}/api/files/download/${fileId}`;
+        
+        // Create a temporary link to trigger download (same as sidebar)
         const link = document.createElement('a');
         link.href = directDownloadUrl;
         link.download = file?.name?.replace('.pdf', '.csv') || 'converted-file.csv';
