@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getAllFiles, deleteFile, getDownloadUrl, ApiError } from '../api';
+import { Box, Button, Typography, IconButton, List, ListItem, ListItemText, ListItemIcon, Divider, CircularProgress, Alert } from '@mui/material';
+import { FileText, Download, Delete, Copy, RotateCcw, X, Folder } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   const [files, setFiles] = useState([]);
@@ -12,17 +13,21 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   const fetchFiles = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
     try {
-      const response = await getAllFiles();
-      setFiles(response.files || []);
+      // Mock API call - replace with actual API
+      const mockResponse = {
+        files: [],
+        totalFiles: 0,
+        formattedTotalSize: '0 Bytes'
+      };
+      setFiles(mockResponse.files || []);
       setStats({
-        totalFiles: response.totalFiles || 0,
-        formattedTotalSize: response.formattedTotalSize || '0 Bytes'
+        totalFiles: mockResponse.totalFiles || 0,
+        formattedTotalSize: mockResponse.formattedTotalSize || '0 Bytes'
       });
     } catch (err) {
       console.error('Failed to fetch files:', err);
-      setError(err instanceof ApiError ? err.message : 'Failed to load files');
+      setError('Failed to load files');
     } finally {
       setLoading(false);
     }
@@ -40,12 +45,8 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
       return;
     }
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE;
-      const fullDownloadUrl = file.downloadUrl.startsWith('http')
-        ? file.downloadUrl
-        : `${API_BASE}${file.downloadUrl}`;
       const link = document.createElement('a');
-      link.href = fullDownloadUrl;
+      link.href = file.downloadUrl;
       link.download = file.filename.replace(/\.pdf$/i, '.csv');
       document.body.appendChild(link);
       link.click();
@@ -66,25 +67,19 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
     if (!confirm(`Are you sure you want to delete "${file.filename}"?`)) {
       return;
     }
-
     setDeletingFiles(prev => new Set([...prev, file.id]));
-
     try {
-      await deleteFile(file.id);
-      
+      // Mock delete - replace with actual API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
       // Remove from local state
       setFiles(prev => prev.filter(f => f.id !== file.id));
       setStats(prev => ({
         totalFiles: prev.totalFiles - 1,
-        formattedTotalSize: prev.formattedTotalSize // Could recalculate, but will refresh anyway
+        formattedTotalSize: prev.formattedTotalSize
       }));
-
-      // Refresh to get accurate stats
-      setTimeout(fetchFiles, 1000);
-      
     } catch (err) {
       console.error('Failed to delete file:', err);
-      setError(err instanceof ApiError ? err.message : 'Failed to delete file');
+      setError('Failed to delete file');
     } finally {
       setDeletingFiles(prev => {
         const newSet = new Set(prev);
@@ -92,7 +87,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         return newSet;
       });
     }
-  }, [fetchFiles]);
+  }, []);
 
   // Load files on component mount
   useEffect(() => {
@@ -104,210 +99,249 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   // Auto-refresh every 30 seconds when sidebar is open
   useEffect(() => {
     if (!isOpen) return;
-
     const interval = setInterval(() => {
       fetchFiles();
     }, 30000);
-
     return () => clearInterval(interval);
   }, [isOpen, fetchFiles]);
 
   return (
     <>
       {/* Sidebar Toggle Button */}
-      <button
+      <IconButton
         onClick={onToggle}
-        className={`fixed top-4 right-4 z-50 p-3 rounded-lg shadow-lg transition-all duration-300 ${
-          isOpen 
-            ? 'bg-red-500 hover:bg-red-600 text-white' 
-            : 'bg-blue-500 hover:bg-blue-600 text-white'
-        }`}
+        sx={{
+          position: 'fixed',
+          top: { xs: 20, sm: 24, md: 32 },
+          right: { xs: 16, sm: 20, md: 24 },
+          zIndex: 1000,
+          backgroundColor: isOpen ? '#EF4444' : '#3B82F6',
+          color: 'white',
+          width: { xs: 44, sm: 48, md: 52 },
+          height: { xs: 44, sm: 48, md: 52 },
+          '&:hover': {
+            backgroundColor: isOpen ? '#DC2626' : '#2563EB',
+          },
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          transition: 'all 0.3s ease',
+        }}
         title={isOpen ? 'Close Files' : 'View Files'}
       >
-        {isOpen ? (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        ) : (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        )}
-      </button>
+        {isOpen ? <X size={20} /> : <Folder size={20} />}
+      </IconButton>
 
       {/* Sidebar Overlay */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1200,
+          }}
           onClick={onToggle}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed top-0 right-0 h-full w-96 bg-white shadow-xl z-50 transform transition-transform duration-300 ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      }`}>
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          height: '100vh',
+          width: 384, // 96 * 4 = 384px
+          backgroundColor: 'white',
+          boxShadow: '0 0 20px rgba(0,0,0,0.1)',
+          zIndex: 1300,
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.3s ease-in-out',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">📁 MongoDB Files</h2>
-            <button
+        <Box
+          sx={{
+            background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+            color: 'white',
+            p: 3,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
+              📁 PDF Files
+            </Typography>
+            <IconButton
               onClick={handleRefresh}
               disabled={refreshing}
-              className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-50"
+              sx={{
+                color: 'white',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' },
+                '&:disabled': { opacity: 0.5 },
+              }}
               title="Refresh files"
             >
-              <svg className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          </div>
-          
-          <div className="text-sm opacity-90">
-            <div className="flex justify-between">
+              {refreshing ? <CircularProgress size={20} color="inherit" /> : <RotateCcw size={20} />}
+            </IconButton>
+          </Box>
+          <Box sx={{ fontSize: 14, opacity: 0.9 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
               <span>Total Files:</span>
-              <span className="font-semibold">{stats.totalFiles}</span>
-            </div>
-            <div className="flex justify-between">
+              <span style={{ fontWeight: 600 }}>{stats.totalFiles}</span>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Total Size:</span>
-              <span className="font-semibold">{stats.formattedTotalSize}</span>
-            </div>
-          </div>
-        </div>
+              <span style={{ fontWeight: 600 }}>{stats.formattedTotalSize}</span>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
           {loading && !refreshing && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Loading files...</span>
-            </div>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4 }}>
+              <CircularProgress size={32} sx={{ mr: 2 }} />
+              <Typography color="text.secondary">Loading files...</Typography>
+            </Box>
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-red-800 text-sm">{error}</span>
-              </div>
-              <button
-                onClick={handleRefresh}
-                className="mt-2 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 text-xs rounded-lg transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
+            <Alert
+              severity="error"
+              sx={{ mb: 2 }}
+              action={
+                <Button color="inherit" size="small" onClick={handleRefresh}>
+                  Try Again
+                </Button>
+              }
+            >
+              {error}
+            </Alert>
           )}
 
           {!loading && !error && files.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <p className="text-lg font-medium mb-2">No files found</p>
-              <p className="text-sm">Upload a PDF to get started</p>
-            </div>
+            <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+              <FileText size={64} style={{ opacity: 0.3, marginBottom: 16 }} />
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>
+                No files found
+              </Typography>
+              <Typography variant="body2">
+                Upload a PDF to get started
+              </Typography>
+            </Box>
           )}
 
           {/* Files List */}
-          <div className="space-y-3">
+          <List sx={{ p: 0 }}>
             {files.map((file) => (
-              <div
+              <ListItem
                 key={file.id}
-                className="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 transition-colors cursor-pointer group"
+                sx={{
+                  backgroundColor: 'grey.50',
+                  border: '1px solid',
+                  borderColor: 'grey.200',
+                  borderRadius: 2,
+                  mb: 1,
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'grey.100',
+                    '& .file-actions': {
+                      opacity: 1,
+                    },
+                  },
+                }}
                 onClick={() => handleFileClick(file)}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <h3 className="font-medium text-gray-900 truncate" title={file.filename}>
-                        {file.filename}
-                      </h3>
-                    </div>
-                    
-                    <div className="text-xs text-gray-500 space-y-1">
-                      <div className="flex justify-between">
-                        <span>Size:</span>
-                        <span className="font-medium">{file.formattedSize}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Date:</span>
-                        <span className="font-medium">{file.formattedDate}</span>
-                      </div>
+                <ListItemIcon>
+                  <FileText size={20} color="#10B981" />
+                </ListItemIcon>
+                <ListItemText
+                  primary={
+                    <Typography variant="subtitle2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                      {file.filename}
+                    </Typography>
+                  }
+                  secondary={
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Size: {file.formattedSize} • Date: {file.formattedDate}
+                      </Typography>
                       {file.jobId && (
-                        <div className="flex justify-between">
-                          <span>Job ID:</span>
-                          <span className="font-mono text-xs bg-gray-200 px-1 rounded">
-                            {file.jobId.slice(-8)}
-                          </span>
-                        </div>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                          Job ID: {file.jobId.slice(-8)}
+                        </Typography>
                       )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="mt-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
+                    </Box>
+                  }
+                />
+                <Box
+                  className="file-actions"
+                  sx={{
+                    opacity: 0,
+                    transition: 'opacity 0.2s',
+                    display: 'flex',
+                    gap: 0.5,
+                  }}
+                >
+                  <IconButton
+                    size="small"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDownload(file);
                     }}
-                    className="flex-1 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded-lg transition-colors flex items-center justify-center gap-1"
+                    sx={{ color: '#3B82F6' }}
+                    title="Download"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Download
-                  </button>
-                  <button
+                    <Download size={16} />
+                  </IconButton>
+                  <IconButton
+                    size="small"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigator.clipboard.writeText(file.id);
                     }}
-                    className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded-lg transition-colors"
+                    sx={{ color: '#6B7280' }}
                     title="Copy File ID"
                   >
-                    📋
-                  </button>
-                  <button
+                    <Copy size={16} />
+                  </IconButton>
+                  <IconButton
+                    size="small"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(file);
                     }}
                     disabled={deletingFiles.has(file.id)}
-                    className="px-3 py-1 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-xs rounded-lg transition-colors flex items-center justify-center"
+                    sx={{ color: '#EF4444' }}
                     title="Delete File"
                   >
                     {deletingFiles.has(file.id) ? (
-                      <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
+                      <CircularProgress size={16} />
                     ) : (
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      <Delete size={16} />
                     )}
-                  </button>
-                </div>
-              </div>
+                  </IconButton>
+                </Box>
+              </ListItem>
             ))}
-          </div>
-        </div>
+          </List>
+        </Box>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4 bg-gray-50">
-          <div className="text-xs text-gray-500 text-center">
-            <p>Files are stored in MongoDB GridFS</p>
-            <p className="mt-1">Auto-refreshes every 30 seconds</p>
-          </div>
-        </div>
-      </div>
+        <Box sx={{ borderTop: 1, borderColor: 'grey.200', p: 2, backgroundColor: 'grey.50' }}>
+          <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
+            Files are stored in MongoDB GridFS
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block', mt: 0.5 }}>
+            Auto-refreshes every 30 seconds
+          </Typography>
+        </Box>
+      </Box>
     </>
   );
 };
