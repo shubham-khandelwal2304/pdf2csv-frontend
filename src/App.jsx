@@ -247,6 +247,7 @@ const PDFtoCSV = () => {
           mb: 4,
           border: '1px solid #8E54F7',
           boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+          textAlign: 'center',
         }}>
           <Typography 
             variant="h5" 

@@ -153,9 +153,11 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
           top: 0,
           right: 0,
           height: '100vh',
-          width: 384, // 96 * 4 = 384px
-          backgroundColor: 'white',
-          boxShadow: '0 0 20px rgba(0,0,0,0.1)',
+          width: 288, // 96 * 3 = 288px
+          backgroundColor: 'rgba(0, 0, 0, 0.95)',
+          backdropFilter: 'blur(10px)',
+          // borderLeft: '1px solid #8E54F7',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
           zIndex: 1300,
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.3s ease-in-out',
@@ -166,7 +168,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         {/* Header */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+            background: 'linear-gradient(135deg, #2579E3 0%, #8E54F7 100%)',
             color: 'white',
             p: 3,
           }}
@@ -202,11 +204,11 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         </Box>
 
         {/* Content */}
-        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+        <Box sx={{ flex: 1, overflow: 'auto', p: 2, backgroundColor: 'transparent' }}>
           {loading && !refreshing && (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4 }}>
-              <CircularProgress size={32} sx={{ mr: 2 }} />
-              <Typography color="text.secondary">Loading files...</Typography>
+              <CircularProgress size={32} sx={{ mr: 2, color: '#8E54F7' }} />
+              <Typography sx={{ color: 'rgba(255,255,255,0.9)' }}>Loading files...</Typography>
             </Box>
           )}
 
@@ -225,12 +227,12 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
           )}
 
           {!loading && !error && files.length === 0 && (
-            <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-              <FileText size={64} style={{ opacity: 0.3, marginBottom: 16 }} />
-              <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <FileText size={64} style={{ opacity: 0.3, marginBottom: 16, color: '#8E54F7' }} />
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 500, color: '#fff' }}>
                 No files found
               </Typography>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
                 Upload a PDF to get started
               </Typography>
             </Box>
@@ -242,14 +244,15 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
               <ListItem
                 key={file.id}
                 sx={{
-                  backgroundColor: 'grey.50',
+                  backgroundColor: 'rgba(142, 84, 247, 0.1)',
                   border: '1px solid',
-                  borderColor: 'grey.200',
+                  borderColor: 'rgba(142, 84, 247, 0.3)',
                   borderRadius: 2,
                   mb: 1,
                   cursor: 'pointer',
                   '&:hover': {
-                    backgroundColor: 'grey.100',
+                    backgroundColor: 'rgba(142, 84, 247, 0.2)',
+                    borderColor: 'rgba(142, 84, 247, 0.5)',
                     '& .file-actions': {
                       opacity: 1,
                     },
@@ -258,21 +261,21 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
                 onClick={() => handleFileClick(file)}
               >
                 <ListItemIcon>
-                  <FileText size={20} color="#10B981" />
+                  <FileText size={20} color="#8E54F7" />
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    <Typography variant="subtitle2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 500, color: '#fff' }}>
                       {file.filename}
                     </Typography>
                   }
                   secondary={
                     <Box>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
                         Size: {file.formattedSize} • Date: {file.formattedDate}
                       </Typography>
                       {file.jobId && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'block' }}>
                           Job ID: {file.jobId.slice(-8)}
                         </Typography>
                       )}
@@ -294,7 +297,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
                       e.stopPropagation();
                       handleDownload(file);
                     }}
-                    sx={{ color: '#3B82F6' }}
+                    sx={{ color: '#8E54F7' }}
                     title="Download"
                   >
                     <Download size={16} />
@@ -305,7 +308,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
                       e.stopPropagation();
                       navigator.clipboard.writeText(file.id);
                     }}
-                    sx={{ color: '#6B7280' }}
+                    sx={{ color: 'rgba(255,255,255,0.7)' }}
                     title="Copy File ID"
                   >
                     <Copy size={16} />
@@ -333,11 +336,11 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         </Box>
 
         {/* Footer */}
-        <Box sx={{ borderTop: 1, borderColor: 'grey.200', p: 2, backgroundColor: 'grey.50' }}>
-          <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
+        <Box sx={{ borderTop: 1, borderColor: 'rgba(142, 84, 247, 0.3)', p: 2, backgroundColor: 'transparent' }}>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', display: 'block' }}>
             Files are stored in MongoDB GridFS
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block', mt: 0.5 }}>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', display: 'block', mt: 0.5 }}>
             Auto-refreshes every 30 seconds
           </Typography>
         </Box>
