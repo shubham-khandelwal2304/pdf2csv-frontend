@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Button, Typography, IconButton, List, ListItem, ListItemText, ListItemIcon, Divider, CircularProgress, Alert } from '@mui/material';
-import { FileText, Download, Delete, Copy, RotateCcw, X, Folder } from 'lucide-react';
+import { FileText, Download, Delete, RotateCcw, X, Folder } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   const [files, setFiles] = useState([]);
@@ -42,14 +42,17 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   }, [fetchFiles]);
 
   const handleDownload = useCallback(async (file) => {
-    if (!file.downloadUrl) {
-      setError('No download URL available for this file');
-      return;
-    }
     try {
+      const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
+      
+      // Use the direct download endpoint from the backend
+      const downloadUrl = `${apiBase}/api/files/download/${file.id}`;
+      
+      // Create a temporary link to trigger download
       const link = document.createElement('a');
-      link.href = file.downloadUrl;
+      link.href = downloadUrl;
       link.download = file.filename.replace(/\.pdf$/i, '.csv');
+      link.target = '_blank'; // Open in new tab as fallback
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -279,16 +282,9 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
                     </Typography>
                   }
                   secondary={
-                    <Box>
-                      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                        Size: {file.formattedSize} • Date: {file.formattedDate}
-                      </Typography>
-                      {file.jobId && (
-                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'block' }}>
-                          Job ID: {file.jobId.slice(-8)}
-                        </Typography>
-                      )}
-                    </Box>
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                      Size: {file.formattedSize} • Date: {file.formattedDate}
+                    </Typography>
                   }
                 />
                 <Box
@@ -310,17 +306,6 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
                     title="Download"
                   >
                     <Download size={16} />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigator.clipboard.writeText(file.id);
-                    }}
-                    sx={{ color: 'rgba(255,255,255,0.7)' }}
-                    title="Copy File ID"
-                  >
-                    <Copy size={16} />
                   </IconButton>
                   <IconButton
                     size="small"
