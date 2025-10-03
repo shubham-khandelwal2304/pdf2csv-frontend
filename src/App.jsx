@@ -138,22 +138,29 @@ const PDFtoCSV = () => {
         const result = await response.json()
         
         if (result.ready) {
-          // Get download URL from separate endpoint
-          try {
-            const downloadResponse = await fetch(`${BACKEND_URL}/api/jobs/${jobId}/download-url`)
-            if (downloadResponse.ok) {
-              const downloadData = await downloadResponse.json()
-              setIsProcessing(false)
-              setDownloadUrl(downloadData.url)
-              return
+          // Use the download URL from the job status response
+          if (result.downloadUrl) {
+            setIsProcessing(false)
+            setDownloadUrl(result.downloadUrl)
+            return
+          } else {
+            // Fallback: get download URL from separate endpoint
+            try {
+              const downloadResponse = await fetch(`${BACKEND_URL}/api/jobs/${jobId}/download-url`)
+              if (downloadResponse.ok) {
+                const downloadData = await downloadResponse.json()
+                setIsProcessing(false)
+                setDownloadUrl(downloadData.url)
+                return
+              }
+            } catch (downloadErr) {
+              console.error('Failed to get download URL:', downloadErr)
             }
-          } catch (downloadErr) {
-            console.error('Failed to get download URL:', downloadErr)
+            // Final fallback: set a placeholder URL
+            setIsProcessing(false)
+            setDownloadUrl(`${BACKEND_URL}/api/jobs/${jobId}/download-url`)
+            return
           }
-          // Fallback: set a placeholder URL
-          setIsProcessing(false)
-          setDownloadUrl(`${BACKEND_URL}/api/jobs/${jobId}/download-url`)
-          return
         } else if (result.status === 'error') {
           throw new Error(result.error || 'Conversion failed')
         } else if (attempts >= maxAttempts) {
@@ -175,37 +182,17 @@ const PDFtoCSV = () => {
   const handleDownload = useCallback(async () => {
     if (downloadUrl) {
       try {
-        // Use the same download logic as the sidebar
-        const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
-        
-        // If it's a direct URL, use it directly
-        if (downloadUrl.startsWith('http')) {
-          const link = document.createElement('a')
-          link.href = downloadUrl
-          link.download = file?.name?.replace('.pdf', '.csv') || 'converted-file.csv'
-          link.target = '_blank' // Open in new tab as fallback
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-        } else {
-          // If it's an API endpoint, fetch the actual download URL
-          const response = await fetch(downloadUrl)
-          if (response.ok) {
-            const data = await response.json()
-            const link = document.createElement('a')
-            link.href = data.url
-            link.download = data.filename || file?.name?.replace('.pdf', '.csv') || 'converted-file.csv'
-            link.target = '_blank' // Open in new tab as fallback
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-          } else {
-            throw new Error('Failed to get download URL')
-          }
-        }
+        // For main uploader, use the downloadUrl directly as it comes from the job system
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = file?.name?.replace('.pdf', '.csv') || 'converted-file.csv';
+        link.target = '_blank'; // Open in new tab as fallback
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } catch (err) {
-        console.error('Download failed:', err)
-        setError('Download failed. Please try again.')
+        console.error('Download failed:', err);
+        setError('Download failed. Please try again.');
       }
     }
   }, [downloadUrl, file])
