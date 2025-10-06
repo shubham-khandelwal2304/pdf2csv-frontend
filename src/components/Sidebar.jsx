@@ -9,13 +9,29 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   const [stats, setStats] = useState({ totalFiles: 0, formattedTotalSize: '0 Bytes' });
   const [refreshing, setRefreshing] = useState(false);
   const [deletingFiles, setDeletingFiles] = useState(new Set());
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-  const fetchFiles = useCallback(async () => {
-    setLoading(true);
+  const fetchFiles = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
-      const response = await fetch(`${apiBase}/api/files`);
+      
+      // Add timeout and abort controller for better performance
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(`${apiBase}/api/files`, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch files: ${response.status} ${response.statusText}`);
@@ -27,17 +43,24 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         totalFiles: data.totalFiles || 0,
         formattedTotalSize: data.formattedTotalSize || '0 Bytes'
       });
+      setHasLoadedOnce(true);
     } catch (err) {
       console.error('Failed to fetch files:', err);
-      setError('Failed to load files');
+      if (err.name === 'AbortError') {
+        setError('Request timeout. Please try again.');
+      } else {
+        setError('Failed to load files');
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, []);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchFiles();
+    await fetchFiles(false); // Don't show loading spinner for refresh
     setRefreshing(false);
   }, [fetchFiles]);
 
@@ -101,21 +124,14 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
     }
   }, []);
 
-  // Load files on component mount
+  // Load files only when sidebar is opened for the first time
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !hasLoadedOnce) {
       fetchFiles();
     }
-  }, [isOpen, fetchFiles]);
+  }, [isOpen, hasLoadedOnce, fetchFiles]);
 
-  // Auto-refresh every 30 seconds when sidebar is open
-  useEffect(() => {
-    if (!isOpen) return;
-    const interval = setInterval(() => {
-      fetchFiles();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [isOpen, fetchFiles]);
+  // Removed auto-refresh functionality for better performance
 
   return (
     <>
@@ -348,7 +364,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
             Files are stored in MongoDB GridFS
           </Typography>
           <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', display: 'block', mt: 0.5 }}>
-            Auto-refreshes every 30 seconds
+            Click refresh to update files
           </Typography>
         </Box>
       </Box>
