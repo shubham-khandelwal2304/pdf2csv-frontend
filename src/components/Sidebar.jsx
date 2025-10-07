@@ -21,7 +21,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
       
       // Add timeout and abort controller for better performance
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for initial load
       
       const response = await fetch(`${apiBase}/api/files`, {
         signal: controller.signal,
@@ -47,9 +47,11 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
     } catch (err) {
       console.error('Failed to fetch files:', err);
       if (err.name === 'AbortError') {
-        setError('Request timeout. Please try again.');
+        setError('Connection timeout. The server may be starting up. Please try again.');
+      } else if (err.message.includes('Failed to fetch')) {
+        setError('Unable to connect to server. Please check your internet connection and try again.');
       } else {
-        setError('Failed to load files');
+        setError('Failed to load files. Please try again.');
       }
     } finally {
       if (showLoading) {
@@ -234,9 +236,12 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         {/* Content */}
         <Box sx={{ flex: 1, overflow: 'visible', p: 2, backgroundColor: 'transparent' }}>
           {loading && !refreshing && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4 }}>
-              <CircularProgress size={32} sx={{ mr: 2, color: '#8E54F7' }} />
-              <Typography sx={{ color: 'rgba(255,255,255,0.9)' }}>Loading files...</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 4 }}>
+              <CircularProgress size={32} sx={{ mb: 2, color: '#8E54F7' }} />
+              <Typography sx={{ color: 'rgba(255,255,255,0.9)', mb: 1 }}>Loading files...</Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>
+                This may take a moment if the server is starting up
+              </Typography>
             </Box>
           )}
 
