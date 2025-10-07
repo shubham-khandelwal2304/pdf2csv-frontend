@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Button, Typography, IconButton, List, ListItem, ListItemText, ListItemIcon, Divider, CircularProgress, Alert } from '@mui/material';
-import { FileText, Download, Delete, RotateCcw, X, Folder } from 'lucide-react';
+import { FileText, Download, Trash2, RotateCcw, X, Folder } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   const [files, setFiles] = useState([]);
@@ -232,7 +232,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         </Box>
 
         {/* Content */}
-        <Box sx={{ flex: 1, overflow: 'auto', p: 2, backgroundColor: 'transparent' }}>
+        <Box sx={{ flex: 1, overflow: 'visible', p: 2, backgroundColor: 'transparent' }}>
           {loading && !refreshing && (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4 }}>
               <CircularProgress size={32} sx={{ mr: 2, color: '#8E54F7' }} />
@@ -349,7 +349,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
                     {deletingFiles.has(file.id) ? (
                       <CircularProgress size={16} />
                     ) : (
-                      <Delete size={16} />
+                      <Trash2 size={16} />
                     )}
                   </IconButton>
                 </Box>
