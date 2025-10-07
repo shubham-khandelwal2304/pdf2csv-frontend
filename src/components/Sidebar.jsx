@@ -145,12 +145,12 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
           top: { xs: 20, sm: 24, md: 32 },
           right: { xs: 16, sm: 20, md: 24 },
           zIndex: 1000,
-          backgroundColor: isOpen ? '#EF4444' : '#3B82F6',
+          backgroundColor: isOpen ? '#EF4444' : '#8E54F7',
           color: 'white',
           width: { xs: 44, sm: 48, md: 52 },
           height: { xs: 44, sm: 48, md: 52 },
           '&:hover': {
-            backgroundColor: isOpen ? '#DC2626' : '#2563EB',
+            backgroundColor: isOpen ? '#DC2626' : '#7C3AED',
           },
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           transition: 'all 0.3s ease',
@@ -198,7 +198,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         {/* Header */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #2579E3 0%, #8E54F7 100%)',
+            background: 'linear-gradient(135deg, #8E54F7 0%, #000000 100%)',
             color: 'white',
             p: 3,
           }}
