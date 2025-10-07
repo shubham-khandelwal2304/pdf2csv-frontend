@@ -234,7 +234,20 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         </Box>
 
         {/* Content */}
-        <Box sx={{ flex: 1, overflow: 'visible', p: 2, backgroundColor: 'transparent' }}>
+        <Box sx={{ 
+          flex: 1, 
+          overflow: 'auto', 
+          p: 2, 
+          backgroundColor: 'transparent',
+          // Hide scrollbar but keep scroll functionality
+          '&::-webkit-scrollbar': {
+            display: 'none'
+          },
+          // For Firefox
+          scrollbarWidth: 'none',
+          // For IE and Edge
+          msOverflowStyle: 'none'
+        }}>
           {loading && !refreshing && (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 4 }}>
               <CircularProgress size={32} sx={{ mb: 2, color: '#8E54F7' }} />
