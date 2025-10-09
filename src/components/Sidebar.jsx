@@ -126,6 +126,46 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
     }
   }, []);
 
+  const handleDeleteAll = useCallback(async () => {
+    if (files.length === 0) return;
+    
+    if (!confirm(`Are you sure you want to delete all ${files.length} files? This action cannot be undone.`)) {
+      return;
+    }
+    
+    setDeletingFiles(prev => new Set(files.map(f => f.id)));
+    try {
+      const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
+      
+      // Delete all files in parallel
+      const deletePromises = files.map(file => 
+        fetch(`${apiBase}/api/files/${file.id}`, {
+          method: 'DELETE'
+        })
+      );
+      
+      const responses = await Promise.all(deletePromises);
+      
+      // Check if any deletions failed
+      const failedDeletions = responses.filter(response => !response.ok);
+      if (failedDeletions.length > 0) {
+        throw new Error(`Failed to delete ${failedDeletions.length} files`);
+      }
+      
+      // Clear all files from local state
+      setFiles([]);
+      setStats({
+        totalFiles: 0,
+        formattedTotalSize: '0 Bytes'
+      });
+    } catch (err) {
+      console.error('Failed to delete all files:', err);
+      setError('Failed to delete all files');
+    } finally {
+      setDeletingFiles(new Set());
+    }
+  }, [files]);
+
   // Load files only when sidebar is opened for the first time
   useEffect(() => {
     if (isOpen && !hasLoadedOnce) {
@@ -210,15 +250,18 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
             <IconButton
               onClick={handleRefresh}
               disabled={refreshing}
+              size="small"
               sx={{
                 color: 'white',
                 backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                width: 28,
+                height: 28,
                 '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.3)' },
                 '&:disabled': { opacity: 0.5 },
               }}
               title="Refresh files"
             >
-              {refreshing ? <CircularProgress size={20} color="inherit" /> : <RotateCcw size={20} />}
+              {refreshing ? <CircularProgress size={16} color="inherit" /> : <RotateCcw size={16} />}
             </IconButton>
           </Box>
           <Box sx={{ fontSize: 14, opacity: 0.9 }}>
@@ -232,6 +275,39 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
             </Box>
           </Box>
         </Box>
+
+        {/* Delete All Button */}
+        {files.length > 0 && (
+          <Box sx={{ p: 1, borderBottom: 1, borderColor: 'rgba(142, 84, 247, 0.3)', display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="text"
+              onClick={handleDeleteAll}
+              disabled={deletingFiles.size > 0}
+              sx={{
+                color: '#E6E6FA', // Lavender color
+                fontWeight: 500,
+                textTransform: 'none',
+                py: 0.5,
+                px: 1,
+                minWidth: 'auto',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                '&:hover': {
+                  backgroundColor: 'rgba(230, 230, 250, 0.1)',
+                  color: '#D8BFD8', // Slightly lighter lavender on hover
+                  cursor: 'pointer',
+                },
+                '&:disabled': {
+                  color: 'rgba(230, 230, 250, 0.3)',
+                  cursor: 'not-allowed',
+                },
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {deletingFiles.size > 0 ? 'Deleting...' : 'Clear All'}
+            </Button>
+          </Box>
+        )}
 
         {/* Content */}
         <Box sx={{ 
