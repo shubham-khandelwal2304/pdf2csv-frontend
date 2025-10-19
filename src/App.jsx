@@ -305,7 +305,7 @@ const PDFtoCSV = () => {
           </Typography>
           <Button
             variant="contained"
-            href="https://www.sejda.com/flatten-pdf"
+            href="https://pdf-flattening-frontend.vercel.app/"
             target="_blank"
             rel="noopener noreferrer"
             sx={{
