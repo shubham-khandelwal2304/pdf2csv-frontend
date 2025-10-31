@@ -66,8 +66,27 @@ async function apiRequest(url, options = {}) {
 }
 
 /**
- * Upload PDF file and start conversion
- * @param {File} file - PDF file to upload
+ * Check if file is a valid invoice format (PDF or image)
+ * @param {File} file - File to check
+ * @returns {boolean}
+ */
+function isValidInvoiceFile(file) {
+  const validTypes = [
+    'application/pdf',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/tiff',
+    'image/bmp'
+  ];
+  return validTypes.includes(file.type);
+}
+
+/**
+ * Upload PDF or image invoice file and start conversion
+ * @param {File} file - PDF or image file to upload
  * @returns {Promise<{jobId: string, message: string, filename: string, execution?: object}>}
  */
 export async function uploadPdf(file) {
@@ -75,8 +94,8 @@ export async function uploadPdf(file) {
     throw new ApiError('No file provided', 400, 'NO_FILE');
   }
 
-  if (file.type !== 'application/pdf') {
-    throw new ApiError('Only PDF files are allowed', 400, 'INVALID_FILE_TYPE');
+  if (!isValidInvoiceFile(file)) {
+    throw new ApiError('Only PDF and image files (JPEG, PNG, GIF, WebP, TIFF, BMP) are allowed', 400, 'INVALID_FILE_TYPE');
   }
 
   if (file.size > 20 * 1024 * 1024) {

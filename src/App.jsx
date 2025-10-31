@@ -44,14 +44,28 @@ const PDFtoCSV = () => {
   
   const BACKEND_URL = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com'
 
+  const isValidInvoiceFile = useCallback((file) => {
+    const validTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/tiff',
+      'image/bmp'
+    ];
+    return file && validTypes.includes(file.type);
+  }, []);
+
   const handleFileSelectFromInput = useCallback((selectedFile) => {
-    if (selectedFile && selectedFile.type === 'application/pdf') {
+    if (isValidInvoiceFile(selectedFile)) {
       setFile(selectedFile)
       setError(null)
     } else {
-      setError('Please select a valid PDF file')
+      setError('Please select a valid PDF or image invoice file')
     }
-  }, [])
+  }, [isValidInvoiceFile])
 
   const handleDrag = useCallback((e) => {
     e.preventDefault()
@@ -190,7 +204,10 @@ const PDFtoCSV = () => {
         // Create a temporary link to trigger download (same as sidebar)
         const link = document.createElement('a');
         link.href = directDownloadUrl;
-        link.download = file?.name?.replace('.pdf', '.csv') || 'converted-file.csv';
+        // Replace file extension with .csv
+        const fileName = file?.name || 'converted-file';
+        const csvName = fileName.replace(/\.(pdf|jpg|jpeg|png|gif|webp|tiff|tif|bmp)$/i, '.csv');
+        link.download = csvName;
         link.target = '_blank'; // Open in new tab as fallback
         document.body.appendChild(link);
         link.click();
@@ -251,7 +268,7 @@ const PDFtoCSV = () => {
               color: '#fff'
             }}
           >
-            PDF to CSV{' '}
+            Invoice to CSV{' '}
             <Box component="span" sx={{
               background: 'linear-gradient(180deg, #2579E3 0%, #8E54F7 100%)',
               WebkitBackgroundClip: 'text',
@@ -268,11 +285,11 @@ const PDFtoCSV = () => {
             mx: 'auto',
             lineHeight: 1.6
           }}>
-            Convert your PDF files to CSV format quickly and easily
+            Convert your PDF and image invoices to CSV format quickly and easily
           </Typography>
         </Box>
 
-        {/* Flatten PDF Section */}
+        {/* Flatten Invoice Section */}
         <Box sx={{
           background: 'transparent',
           borderRadius: 4,
@@ -324,7 +341,7 @@ const PDFtoCSV = () => {
               },
             }}
           >
-            Select PDF File
+            Select Invoice File
           </Button>
         </Box>
 
@@ -362,7 +379,7 @@ const PDFtoCSV = () => {
             <input
               id="file-input"
               type="file"
-              accept=".pdf"
+              accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.tiff,.tif,.bmp"
               onChange={handleFileInput}
               style={{ display: 'none' }}
             />
@@ -377,7 +394,7 @@ const PDFtoCSV = () => {
               color: '#fff',
               mb: 2
             }}>
-              Upload PDF File
+              Upload Invoice
             </Typography>
             
             <Typography sx={{ 
@@ -386,7 +403,7 @@ const PDFtoCSV = () => {
               mb: 4,
               lineHeight: 1.6
             }}>
-              Drag and drop a PDF file here, or{' '}
+              Drag and drop a PDF or image invoice here, or{' '}
               <Box 
                 component="span" 
                 sx={{ 
@@ -406,7 +423,7 @@ const PDFtoCSV = () => {
               textAlign: 'center'
             }}>
               <Typography sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
-                • PDF files only
+                • PDF, JPEG, PNG, GIF, WebP, TIFF, or BMP files
               </Typography>
               <Typography sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
                 • Maximum size: 20MB
@@ -476,7 +493,7 @@ const PDFtoCSV = () => {
                   )
                 }
               >
-                {isUploading ? 'Uploading...' : isProcessing ? 'Converting...' : file ? 'Convert to CSV' : 'Select PDF File'}
+                {isUploading ? 'Uploading...' : isProcessing ? 'Converting...' : file ? 'Convert to CSV' : 'Select Invoice File'}
               </GradientButton>
             )}
 

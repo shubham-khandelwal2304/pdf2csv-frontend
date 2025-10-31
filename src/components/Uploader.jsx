@@ -15,7 +15,7 @@ const Uploader = ({ onUpload, disabled }) => {
       if (rejection.errors.some(e => e.code === 'file-too-large')) {
         errorMessage = 'File too large (max 20MB)';
       } else if (rejection.errors.some(e => e.code === 'file-invalid-type')) {
-        errorMessage = 'Only PDF files are allowed';
+        errorMessage = 'Only PDF and image files (JPEG, PNG, GIF, WebP) are allowed';
       } else if (rejection.errors.some(e => e.code === 'too-many-files')) {
         errorMessage = 'Only one file at a time';
       }
@@ -44,7 +44,13 @@ const Uploader = ({ onUpload, disabled }) => {
     onDragEnter,
     onDragLeave,
     accept: {
-      'application/pdf': ['.pdf']
+      'application/pdf': ['.pdf'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/gif': ['.gif'],
+      'image/webp': ['.webp'],
+      'image/tiff': ['.tiff', '.tif'],
+      'image/bmp': ['.bmp']
     },
     maxFiles: 1,
     maxSize: 20 * 1024 * 1024, // 20MB
@@ -79,17 +85,17 @@ const Uploader = ({ onUpload, disabled }) => {
           </div>
           
           <h3 className="text-xl font-semibold mb-4 text-gray-800">
-            Upload PDF File
+            Upload Invoice
           </h3>
           
           <p className="text-gray-600 text-lg mb-6 leading-relaxed">
             {isDragActive ? (
               <span className="text-blue-600 font-medium">
-                Drop your PDF file here...
+                Drop your invoice file here...
               </span>
             ) : (
               <>
-                Drag and drop a PDF file here, or{' '}
+                Drag and drop a PDF or image invoice here, or{' '}
                 <button
                   type="button"
                   className="text-blue-600 underline hover:text-blue-700 font-medium 
@@ -106,7 +112,7 @@ const Uploader = ({ onUpload, disabled }) => {
           
           <div className="pt-4 border-t border-gray-200">
             <div className="text-sm text-gray-500 leading-relaxed">
-              <div>• PDF files only</div>
+              <div>• PDF, JPEG, PNG, GIF, WebP, TIFF, or BMP files</div>
               <div>• Maximum size: 20MB</div>
               <div>• One file at a time</div>
             </div>
