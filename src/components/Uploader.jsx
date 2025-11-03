@@ -15,7 +15,7 @@ const Uploader = ({ onUpload, disabled }) => {
       if (rejection.errors.some(e => e.code === 'file-too-large')) {
         errorMessage = 'File too large (max 20MB)';
       } else if (rejection.errors.some(e => e.code === 'file-invalid-type')) {
-        errorMessage = 'Only PDF and image files (JPEG, PNG, GIF, WebP) are allowed';
+        errorMessage = 'Only PDF and image files (JPEG, JPG) are allowed';
       } else if (rejection.errors.some(e => e.code === 'too-many-files')) {
         errorMessage = 'Only one file at a time';
       }
@@ -45,12 +45,7 @@ const Uploader = ({ onUpload, disabled }) => {
     onDragLeave,
     accept: {
       'application/pdf': ['.pdf'],
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png'],
-      'image/gif': ['.gif'],
-      'image/webp': ['.webp'],
-      'image/tiff': ['.tiff', '.tif'],
-      'image/bmp': ['.bmp']
+      'image/jpeg': ['.jpg', '.jpeg']
     },
     maxFiles: 1,
     maxSize: 20 * 1024 * 1024, // 20MB
@@ -112,7 +107,7 @@ const Uploader = ({ onUpload, disabled }) => {
           
           <div className="pt-4 border-t border-gray-200">
             <div className="text-sm text-gray-500 leading-relaxed">
-              <div>• PDF, JPEG, PNG, GIF, WebP, TIFF, or BMP files</div>
+              <div>• PDF or JPEG/JPG files</div>
               <div>• Maximum size: 20MB</div>
               <div>• One file at a time</div>
             </div>

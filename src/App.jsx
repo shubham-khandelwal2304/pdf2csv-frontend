@@ -48,12 +48,7 @@ const PDFtoCSV = () => {
     const validTypes = [
       'application/pdf',
       'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'image/tiff',
-      'image/bmp'
+      'image/jpg'
     ];
     return file && validTypes.includes(file.type);
   }, []);
@@ -206,7 +201,7 @@ const PDFtoCSV = () => {
         link.href = directDownloadUrl;
         // Replace file extension with .csv
         const fileName = file?.name || 'converted-file';
-        const csvName = fileName.replace(/\.(pdf|jpg|jpeg|png|gif|webp|tiff|tif|bmp)$/i, '.csv');
+        const csvName = fileName.replace(/\.(pdf|jpg|jpeg)$/i, '.csv');
         link.download = csvName;
         link.target = '_blank'; // Open in new tab as fallback
         document.body.appendChild(link);
@@ -379,7 +374,7 @@ const PDFtoCSV = () => {
             <input
               id="file-input"
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.tiff,.tif,.bmp"
+              accept=".pdf,.jpg,.jpeg"
               onChange={handleFileInput}
               style={{ display: 'none' }}
             />
@@ -423,7 +418,7 @@ const PDFtoCSV = () => {
               textAlign: 'center'
             }}>
               <Typography sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
-                • PDF, JPEG, PNG, GIF, WebP, TIFF, or BMP files
+                • PDF or JPEG/JPG files
               </Typography>
               <Typography sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>
                 • Maximum size: 20MB

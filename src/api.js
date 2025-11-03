@@ -74,12 +74,7 @@ function isValidInvoiceFile(file) {
   const validTypes = [
     'application/pdf',
     'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'image/tiff',
-    'image/bmp'
+    'image/jpg'
   ];
   return validTypes.includes(file.type);
 }
@@ -95,7 +90,7 @@ export async function uploadPdf(file) {
   }
 
   if (!isValidInvoiceFile(file)) {
-    throw new ApiError('Only PDF and image files (JPEG, PNG, GIF, WebP, TIFF, BMP) are allowed', 400, 'INVALID_FILE_TYPE');
+    throw new ApiError('Only PDF and image files (JPEG, JPG) are allowed', 400, 'INVALID_FILE_TYPE');
   }
 
   if (file.size > 20 * 1024 * 1024) {
