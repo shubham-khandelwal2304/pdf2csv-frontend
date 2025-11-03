@@ -493,25 +493,13 @@ const PDFtoCSV = () => {
             )}
 
             {downloadUrl && (
-              <Button
-                variant="contained"
+              <GradientButton
                 size="large"
                 onClick={handleDownload}
                 startIcon={<Download size={20} />}
-                sx={{
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 2,
-                  fontWeight: 600,
-                  fontSize: 16,
-                  background: 'linear-gradient(135deg, #8E54F7 0%, #7C3AED 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)',
-                  }
-                }}
               >
                 Download CSV
-              </Button>
+              </GradientButton>
             )}
 
             {(file || downloadUrl) && (
