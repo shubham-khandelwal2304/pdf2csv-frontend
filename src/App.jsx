@@ -285,7 +285,7 @@ const PDFtoCSV = () => {
         </Box>
 
         {/* Flatten Invoice Section */}
-        <Box sx={{
+        {/* <Box sx={{
           background: 'transparent',
           borderRadius: 4,
           p: { xs: 3, md: 4 },
@@ -338,7 +338,7 @@ const PDFtoCSV = () => {
           >
             Select Invoice File
           </Button>
-        </Box>
+        </Box> */}
 
         {/* Upload Card */}
         <Box sx={{

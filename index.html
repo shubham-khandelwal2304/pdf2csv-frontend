@@ -5,9 +5,108 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PDF to CSV Frontend</title>
     <link rel="icon" href="/favicon.ico" />
+    <style>
+      /* Loading Screen Styles */
+      #loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease-out;
+      }
+
+      #loading-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loading-gradient {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 88%;
+        height: 10%;
+        background: radial-gradient(ellipse at top, rgba(154, 106, 255, 0.6) 0%, rgba(0, 0, 0, 0) 60%);
+        z-index: 1;
+      }
+
+      .loading-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+      }
+
+      .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(142, 84, 247, 0.2);
+        border-top-color: #8E54F7;
+        border-right-color: #2579E3;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 24px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .loading-text {
+        color: #fff;
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+
+      .loading-subtext {
+        color: rgba(255, 255, 255, 0.9);
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+        font-size: 16px;
+      }
+
+      .gradient-text {
+        background: linear-gradient(180deg, #2579E3 0%, #8E54F7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+    </style>
   </head>
   <body>
+    <div id="loading-screen">
+      <div class="loading-gradient"></div>
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">
+          Invoice to CSV <span class="gradient-text">Converter</span>
+        </div>
+        <div class="loading-subtext">Loading...</div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Hide loading screen once React app loads
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const loadingScreen = document.getElementById('loading-screen');
+          if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+            setTimeout(function() {
+              loadingScreen.remove();
+            }, 500);
+          }
+        }, 300);
+      });
+    </script>
   </body>
 </html>

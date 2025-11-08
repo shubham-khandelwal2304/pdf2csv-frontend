@@ -10,7 +10,8 @@
   }
   
   body {
-    @apply m-0 min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600;
+    @apply m-0 min-h-screen;
+    background: #000;
   }
 }
 
