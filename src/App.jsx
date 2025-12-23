@@ -184,13 +184,13 @@ const PDFtoCSV = () => {
         setIsProcessing(false)
         setProcessStep(3)
         setDownloadUrl(result.downloadUrl)
-        setDownloadName(file.name.replace(/\.(pdf|jpg|jpeg)$/i, '.csv'))
+        setDownloadName(file.name.replace(/\.(pdf|jpg|jpeg)$/i, ''))
         toast.success("Conversion complete!")
       } else if (result.jobId) {
         // Store job ID for download
         setCurrentJobId(result.jobId)
         // Set initial filename for valid future download reference
-        setDownloadName(file.name.replace(/\.(pdf|jpg|jpeg)$/i, '.csv'))
+        setDownloadName(file.name.replace(/\.(pdf|jpg|jpeg)$/i, ''))
 
         // Poll for completion
         await pollForCompletion(result.jobId)
@@ -461,7 +461,7 @@ const PDFtoCSV = () => {
               cursor: (isUploading || isProcessing) ? 'not-allowed' : 'pointer',
               opacity: (isUploading || isProcessing) ? 0.6 : 1,
             }}
-            onClick={() => !isUploading && !isProcessing && document.getElementById('file-input').click()}
+            onClick={() => !isUploading && !isProcessing && !downloadUrl && document.getElementById('file-input').click()}
           >
             <input
               id="file-input"
@@ -548,12 +548,13 @@ const PDFtoCSV = () => {
                     <FileText size={18} color="#8E54F7" />
                     <input
                       type="text"
-                      value={downloadName}
-                      onChange={(e) => setDownloadName(e.target.value)}
+                      value={downloadName.replace(/\.csv$/i, '')}
+                      onChange={(e) => setDownloadName(e.target.value.replace(/\.csv$/i, ''))}
                       onClick={(e) => e.stopPropagation()}
-                      style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 16, width: 200, outline: 'none' }}
+                      style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 16, width: 200, outline: 'none', textAlign: 'left' }}
                     />
-                    <Edit2 size={16} color="#666" />
+                    <Typography sx={{ color: '#666', userSelect: 'none' }}>.csv</Typography>
+                    <Edit2 size={16} color="#666" style={{ marginLeft: 8 }} />
                   </Box>
                 </Box>
               </motion.div>
