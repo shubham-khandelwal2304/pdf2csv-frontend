@@ -247,42 +247,54 @@ const PDFtoCSV = () => {
       try {
         const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
 
-        // Get the file ID from the job by calling the download-url endpoint
+        // 1. Get the Download URL info
         const response = await fetch(`${apiBase}/api/jobs/${currentJobId}/download-url`);
-        if (!response.ok) {
-          throw new Error('Failed to get download URL');
-        }
+        if (!response.ok) throw new Error('Failed to get download URL');
 
         const data = await response.json();
-
-        // Extract file ID from the download URL (same logic as sidebar)
         const fileIdMatch = data.url.match(/\/api\/files\/download\/(.+)$/);
-        if (!fileIdMatch) {
-          throw new Error('Invalid download URL format');
-        }
+        if (!fileIdMatch) throw new Error('Invalid download URL format');
 
         const fileId = fileIdMatch[1];
-
-        // Use the EXACT same download logic as the sidebar
         const directDownloadUrl = `${apiBase}/api/files/download/${fileId}`;
 
-        // Create a temporary link to trigger download (same as sidebar)
+        // 2. Fetch the actual file content as a Blob
+        // This is necessary to enforce the custom filename on cross-origin requests
+        const toastId = toast.loading("Preparing download...");
+        const fileResponse = await fetch(directDownloadUrl);
+
+        if (!fileResponse.ok) {
+          toast.dismiss(toastId);
+          throw new Error('Failed to download file content');
+        }
+
+        const blob = await fileResponse.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        // 3. Create link with Blob URL
         const link = document.createElement('a');
-        link.href = directDownloadUrl;
+        link.href = blobUrl;
 
-        // Use user-edited name or fallback
-        const finalName = downloadName.endsWith('.csv') ? downloadName : `${downloadName}.csv`;
+        // Calculate filename
+        const defaultName = file?.name ? file.name.replace(/\.(pdf|jpg|jpeg)$/i, '.csv') : 'converted-file.csv';
+        const nameToUse = downloadName.trim() ? downloadName : defaultName;
+        const finalName = nameToUse.toLowerCase().endsWith('.csv') ? nameToUse : `${nameToUse}.csv`;
+
         link.download = finalName;
-
-        link.target = '_blank'; // Open in new tab as fallback
         document.body.appendChild(link);
         link.click();
+
+        // Cleanup
         document.body.removeChild(link);
-        toast.success("Download started")
+        URL.revokeObjectURL(blobUrl);
+
+        toast.dismiss(toastId);
+        toast.success("Download started");
+
       } catch (err) {
         console.error('Download failed:', err);
         setError('Download failed. Please try again.');
-        toast.error("Download failed to start")
+        toast.error("Download failed to start");
       }
     }
   }, [downloadUrl, currentJobId, file, downloadName])
@@ -538,6 +550,7 @@ const PDFtoCSV = () => {
                       type="text"
                       value={downloadName}
                       onChange={(e) => setDownloadName(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
                       style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 16, width: 200, outline: 'none' }}
                     />
                     <Edit2 size={16} color="#666" />
