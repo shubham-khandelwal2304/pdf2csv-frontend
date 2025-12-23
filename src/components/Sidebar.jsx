@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Button, Typography, IconButton, List, ListItem, ListItemText, ListItemIcon, Divider, CircularProgress, Alert } from '@mui/material';
-import { FileText, Download, Trash2, RotateCcw, X, Folder } from 'lucide-react';
+import { FileText, Download, Trash2, RotateCcw, X, Folder, Calendar } from 'lucide-react';
+import { format, isToday, isYesterday, subDays, isAfter } from 'date-fns';
 
 const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   const [files, setFiles] = useState([]);
@@ -18,11 +19,11 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
     setError(null);
     try {
       const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
-      
+
       // Add timeout and abort controller for better performance
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for initial load
-      
+
       const response = await fetch(`${apiBase}/api/files`, {
         signal: controller.signal,
         headers: {
@@ -30,13 +31,13 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
           'Cache-Control': 'no-cache'
         }
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch files: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       setFiles(data.files || []);
       setStats({
@@ -69,10 +70,10 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
   const handleDownload = useCallback(async (file) => {
     try {
       const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
-      
+
       // Use the direct download endpoint from the backend
       const downloadUrl = `${apiBase}/api/files/download/${file.id}`;
-      
+
       // Create a temporary link to trigger download
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -103,11 +104,11 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
       const response = await fetch(`${apiBase}/api/files/${file.id}`, {
         method: 'DELETE'
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to delete file: ${response.status} ${response.statusText}`);
       }
-      
+
       // Remove from local state
       setFiles(prev => prev.filter(f => f.id !== file.id));
       setStats(prev => ({
@@ -128,30 +129,30 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
 
   const handleDeleteAll = useCallback(async () => {
     if (files.length === 0) return;
-    
+
     if (!confirm(`Are you sure you want to delete all ${files.length} files? This action cannot be undone.`)) {
       return;
     }
-    
+
     setDeletingFiles(prev => new Set(files.map(f => f.id)));
     try {
       const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
-      
+
       // Delete all files in parallel
-      const deletePromises = files.map(file => 
+      const deletePromises = files.map(file =>
         fetch(`${apiBase}/api/files/${file.id}`, {
           method: 'DELETE'
         })
       );
-      
+
       const responses = await Promise.all(deletePromises);
-      
+
       // Check if any deletions failed
       const failedDeletions = responses.filter(response => !response.ok);
       if (failedDeletions.length > 0) {
         throw new Error(`Failed to delete ${failedDeletions.length} files`);
       }
-      
+
       // Clear all files from local state
       setFiles([]);
       setStats({
@@ -165,6 +166,147 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
       setDeletingFiles(new Set());
     }
   }, [files]);
+
+  const getGroupedFiles = useCallback(() => {
+    const groups = {
+      today: [],
+      yesterday: [],
+      lastWeek: [],
+      older: []
+    };
+
+    files.forEach(file => {
+      // Assuming file has uploadDate property, otherwise use fallback or current date
+      // If your API doesn't return uploadDate, you might need to add it to backend first
+      // For now, let's assume it exists or use a random date for demo if missing
+      const date = file.uploadDate ? new Date(file.uploadDate) : new Date();
+
+      if (isToday(date)) {
+        groups.today.push(file);
+      } else if (isYesterday(date)) {
+        groups.yesterday.push(file);
+      } else if (isAfter(date, subDays(new Date(), 7))) {
+        groups.lastWeek.push(file);
+      } else {
+        groups.older.push(file);
+      }
+    });
+
+    return groups;
+  }, [files]);
+
+  const groupedFiles = getGroupedFiles();
+
+  const renderFileItem = (file) => (
+    <Box
+      key={file.id}
+      sx={{
+        backgroundColor: 'rgba(142, 84, 247, 0.1)',
+        border: '1px solid',
+        borderColor: 'rgba(142, 84, 247, 0.3)',
+        borderRadius: 2,
+        mb: 1,
+        p: 2,
+        cursor: 'pointer',
+        '&:hover': {
+          backgroundColor: 'rgba(142, 84, 247, 0.2)',
+          borderColor: 'rgba(142, 84, 247, 0.5)',
+        },
+      }}
+      onClick={() => handleFileClick(file)}
+    >
+      {/* File Info Section */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+        <FileText size={20} color="#8E54F7" style={{ marginRight: 12 }} />
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              fontWeight: 500,
+              color: '#fff',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {file.filename}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255,255,255,0.7)' }}
+          >
+            Size: {file.formattedSize}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Action Buttons Section */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload(file);
+          }}
+          sx={{
+            color: '#8E54F7',
+            backgroundColor: 'rgba(142, 84, 247, 0.1)',
+            '&:hover': {
+              backgroundColor: 'rgba(142, 84, 247, 0.2)',
+            }
+          }}
+          title="Download"
+        >
+          <Download size={16} />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete(file);
+          }}
+          disabled={deletingFiles.has(file.id)}
+          sx={{
+            color: '#EF4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            '&:hover': {
+              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            }
+          }}
+          title="Delete File"
+        >
+          {deletingFiles.has(file.id) ? (
+            <CircularProgress size={16} />
+          ) : (
+            <Trash2 size={16} />
+          )}
+        </IconButton>
+      </Box>
+    </Box>
+  );
+
+  const renderGroup = (title, files) => {
+    if (files.length === 0) return null;
+    return (
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'rgba(255,255,255,0.5)',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            letterSpacing: 1,
+            mb: 1.5,
+            display: 'block',
+            pl: 1
+          }}
+        >
+          {title}
+        </Typography>
+        {files.map(renderFileItem)}
+      </Box>
+    );
+  };
 
   // Load files only when sidebar is opened for the first time
   useEffect(() => {
@@ -310,10 +452,10 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
         )}
 
         {/* Content */}
-        <Box sx={{ 
-          flex: 1, 
-          overflow: 'auto', 
-          p: 2, 
+        <Box sx={{
+          flex: 1,
+          overflow: 'auto',
+          p: 2,
           backgroundColor: 'transparent',
           // Hide scrollbar but keep scroll functionality
           '&::-webkit-scrollbar': {
@@ -360,96 +502,19 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
             </Box>
           )}
 
-          {/* Files List */}
-          <List sx={{ p: 0 }}>
-            {files.map((file) => (
-              <Box
-                key={file.id}
-                sx={{
-                  backgroundColor: 'rgba(142, 84, 247, 0.1)',
-                  border: '1px solid',
-                  borderColor: 'rgba(142, 84, 247, 0.3)',
-                  borderRadius: 2,
-                  mb: 1,
-                  p: 2,
-                  cursor: 'pointer',
-                  '&:hover': {
-                    backgroundColor: 'rgba(142, 84, 247, 0.2)',
-                    borderColor: 'rgba(142, 84, 247, 0.5)',
-                  },
-                }}
-                onClick={() => handleFileClick(file)}
-              >
-                {/* File Info Section */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                  <FileText size={20} color="#8E54F7" style={{ marginRight: 12 }} />
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography 
-                      variant="subtitle2" 
-                      sx={{ 
-                        fontWeight: 500, 
-                        color: '#fff',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {file.filename}
-                    </Typography>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ color: 'rgba(255,255,255,0.7)' }}
-                    >
-                      Size: {file.formattedSize}
-                    </Typography>
-                  </Box>
-                </Box>
-                
-                {/* Action Buttons Section */}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDownload(file);
-                    }}
-                    sx={{ 
-                      color: '#8E54F7',
-                      backgroundColor: 'rgba(142, 84, 247, 0.1)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(142, 84, 247, 0.2)',
-                      }
-                    }}
-                    title="Download"
-                  >
-                    <Download size={16} />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(file);
-                    }}
-                    disabled={deletingFiles.has(file.id)}
-                    sx={{ 
-                      color: '#EF4444',
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                      }
-                    }}
-                    title="Delete File"
-                  >
-                    {deletingFiles.has(file.id) ? (
-                      <CircularProgress size={16} />
-                    ) : (
-                      <Trash2 size={16} />
-                    )}
-                  </IconButton>
-                </Box>
-              </Box>
-            ))}
-          </List>
+          {Object.values(groupedFiles).every(g => g.length === 0) && files.length > 0 && (
+            // Fallback if grouping fails logic but files exist, though shouldn't happen
+            <List sx={{ p: 0 }}>
+              {files.map(renderFileItem)}
+            </List>
+          )}
+
+          <Box sx={{ p: 0 }}>
+            {renderGroup('Today', groupedFiles.today)}
+            {renderGroup('Yesterday', groupedFiles.yesterday)}
+            {renderGroup('Previous 7 Days', groupedFiles.lastWeek)}
+            {renderGroup('Older', groupedFiles.older)}
+          </Box>
         </Box>
 
         {/* Footer */}
