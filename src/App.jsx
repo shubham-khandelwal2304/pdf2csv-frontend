@@ -102,7 +102,10 @@ const PDFtoCSV = () => {
       } else {
         setPreviewUrl(null)
       }
-      toast.success("File selected ready to upload")
+      toast.success("File selected ready to upload", {
+        style: { border: '1px solid #8E54F7', color: '#fff', background: '#000' },
+        icon: <Check color="#8E54F7" />
+      })
     } else {
       const msg = 'Please select a valid PDF or image invoice file'
       setError(msg)
@@ -160,7 +163,9 @@ const PDFtoCSV = () => {
       console.log('Uploading file to backend:', BACKEND_URL)
 
       setProcessStep(1)
-      const toastId = toast.loading("Uploading file...")
+      const toastId = toast.loading("Uploading file...", {
+        style: { border: '1px solid #8E54F7', color: '#fff', background: '#000' }
+      })
 
       const response = await fetch(`${BACKEND_URL}/api/jobs`, {
         method: 'POST',
@@ -185,7 +190,10 @@ const PDFtoCSV = () => {
         setProcessStep(3)
         setDownloadUrl(result.downloadUrl)
         setDownloadName(file.name.replace(/\.(pdf|jpg|jpeg)$/i, ''))
-        toast.success("Conversion complete!")
+        toast.success("Conversion complete!", {
+          style: { border: '1px solid #8E54F7', color: '#fff', background: '#000' },
+          icon: <Check color="#8E54F7" />
+        })
       } else if (result.jobId) {
         // Store job ID for download
         setCurrentJobId(result.jobId)
@@ -220,7 +228,10 @@ const PDFtoCSV = () => {
           setIsProcessing(false)
           setProcessStep(3)
           setDownloadUrl('ready') // Set a flag that download is ready
-          toast.success("Conversion successful!")
+          toast.success("Conversion successful!", {
+            style: { border: '1px solid #8E54F7', color: '#fff', background: '#000' },
+            icon: <Check color="#8E54F7" />
+          })
           return
         } else if (result.status === 'error') {
           throw new Error(result.error || 'Conversion failed')
@@ -260,7 +271,9 @@ const PDFtoCSV = () => {
 
         // 2. Fetch the actual file content as a Blob
         // This is necessary to enforce the custom filename on cross-origin requests
-        const toastId = toast.loading("Preparing download...");
+        const toastId = toast.loading("Preparing download...", {
+          style: { border: '1px solid #8E54F7', color: '#fff', background: '#000' }
+        });
         const fileResponse = await fetch(directDownloadUrl);
 
         if (!fileResponse.ok) {
@@ -289,7 +302,10 @@ const PDFtoCSV = () => {
         URL.revokeObjectURL(blobUrl);
 
         toast.dismiss(toastId);
-        toast.success("Download started");
+        toast.success("Download started", {
+          style: { border: '1px solid #8E54F7', color: '#fff', background: '#000' },
+          icon: <Check color="#8E54F7" />
+        });
 
       } catch (err) {
         console.error('Download failed:', err);
@@ -538,8 +554,8 @@ const PDFtoCSV = () => {
             {downloadUrl && (
               <motion.div variants={successVariants} initial="hidden" animate="visible">
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
-                  <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'rgba(34, 197, 94, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                    <Check size={32} color="#22c55e" />
+                  <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'rgba(142, 84, 247, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                    <Check size={32} color="#8E54F7" />
                   </Box>
                   <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>Ready to Download</Typography>
 
