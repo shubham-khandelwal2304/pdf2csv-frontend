@@ -472,7 +472,7 @@ const PDFtoCSV = () => {
             sx={{
               border: '2px dashed #D1D5DB', // Base border handled by variants
               borderRadius: 3,
-              p: 6,
+              p: { xs: 2, sm: 6 },
               textAlign: 'center',
               cursor: (isUploading || isProcessing) ? 'not-allowed' : 'pointer',
               opacity: (isUploading || isProcessing) ? 0.6 : 1,
@@ -490,31 +490,31 @@ const PDFtoCSV = () => {
 
             {/* Stepper Progress UI */}
             {(isUploading || isProcessing || downloadUrl) && (
-              <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
+              <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center', gap: { xs: 1, sm: 2 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
                 {steps.map((step) => {
                   const isActive = processStep >= step.id
                   const isCompleted = processStep > step.id
                   return (
                     <Box key={step.id} sx={{ display: 'flex', alignItems: 'center' }}>
                       <Box sx={{
-                        width: 32,
-                        height: 32,
+                        width: { xs: 24, sm: 32 },
+                        height: { xs: 24, sm: 32 },
                         borderRadius: '50%',
                         bgcolor: isActive ? '#8E54F7' : '#333',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: 'bold',
-                        fontSize: 14,
+                        fontSize: { xs: 12, sm: 14 },
                         color: '#fff',
                         transition: 'all 0.3s ease'
                       }}>
                         {isCompleted ? <Check size={16} /> : step.id}
                       </Box>
-                      <Typography sx={{ ml: 1, fontSize: 14, color: isActive ? '#fff' : '#666', fontWeight: isActive ? 600 : 400 }}>
+                      <Typography sx={{ ml: { xs: 0.5, sm: 1 }, fontSize: { xs: 12, sm: 14 }, color: isActive ? '#fff' : '#666', fontWeight: isActive ? 600 : 400 }}>
                         {step.label}
                       </Typography>
-                      {step.id !== 3 && <Box sx={{ width: 40, height: 2, bgcolor: isCompleted ? '#8E54F7' : '#333', mx: 2 }} />}
+                      {step.id !== 3 && <Box sx={{ width: { xs: 20, sm: 40 }, height: 2, bgcolor: isCompleted ? '#8E54F7' : '#333', mx: { xs: 1, sm: 2 } }} />}
                     </Box>
                   )
                 })}
@@ -560,17 +560,17 @@ const PDFtoCSV = () => {
                   <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>Ready to Download</Typography>
 
                   {/* Filename Editor */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#111', p: 1, px: 2, borderRadius: 2, mb: 3, border: '1px solid #333' }}>
-                    <FileText size={18} color="#8E54F7" />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#111', p: 1, px: 2, borderRadius: 2, mb: 3, border: '1px solid #333', maxWidth: '100%', overflow: 'hidden' }}>
+                    <FileText size={18} color="#8E54F7" style={{ minWidth: 18 }} />
                     <input
                       type="text"
                       value={downloadName.replace(/\.csv$/i, '')}
                       onChange={(e) => setDownloadName(e.target.value.replace(/\.csv$/i, ''))}
                       onClick={(e) => e.stopPropagation()}
-                      style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 16, width: 200, outline: 'none', textAlign: 'left' }}
+                      style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 16, width: '100%', flex: 1, minWidth: 0, outline: 'none', textAlign: 'left' }}
                     />
-                    <Typography sx={{ color: '#666', userSelect: 'none' }}>.csv</Typography>
-                    <Edit2 size={16} color="#666" style={{ marginLeft: 8 }} />
+                    <Typography sx={{ color: '#666', userSelect: 'none', whiteSpace: 'nowrap' }}>.csv</Typography>
+                    <Edit2 size={16} color="#666" style={{ marginLeft: 8, minWidth: 16 }} />
                   </Box>
                 </Box>
               </motion.div>
