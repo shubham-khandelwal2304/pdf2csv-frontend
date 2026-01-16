@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react'
-import { Box, Container, Typography, Button, Alert, CircularProgress } from '@mui/material'
+import { Box, Container, Typography, Button, Alert, CircularProgress, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Toaster, toast } from 'sonner'
-import { CloudUpload, FileText, Download, RotateCcw, Check, Edit2, Loader2 } from 'lucide-react'
+import { CloudUpload, FileText, Download, RotateCcw, Check, Edit2, Loader2, HelpCircle, X, FileSpreadsheet } from 'lucide-react'
 import { styled } from '@mui/material/styles'
 import Sidebar from './components/Sidebar'
 
@@ -73,6 +73,55 @@ const PDFtoCSV = () => {
   const [downloadName, setDownloadName] = useState('')
   const [isRenaming, setIsRenaming] = useState(false)
 
+  const [sampleModalOpen, setSampleModalOpen] = useState(false)
+  const [sampleType, setSampleType] = useState('pdf') // 'pdf' or 'csv'
+  const [sampleUrl, setSampleUrl] = useState('')
+  const [sampleCsvData, setSampleCsvData] = useState([])
+  const [isSampleLoading, setIsSampleLoading] = useState(false)
+
+  const handleViewSample = async (type, url) => {
+    setSampleType(type)
+    setSampleUrl(url)
+    setSampleModalOpen(true)
+
+    if (type === 'csv') {
+      setIsSampleLoading(true)
+      try {
+        const response = await fetch(url)
+        const text = await response.text()
+
+        // Simple CSV parser
+        const rows = text.split('\n').map(row => {
+          // Handle quoted fields which might contain commas
+          const matches = [];
+          let currentMatch = '';
+          let inQuote = false;
+
+          for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            if (char === '"') {
+              inQuote = !inQuote;
+            } else if (char === ',' && !inQuote) {
+              matches.push(currentMatch.trim());
+              currentMatch = '';
+            } else {
+              currentMatch += char;
+            }
+          }
+          matches.push(currentMatch.trim());
+          return matches;
+        }).filter(row => row.some(cell => cell !== '')) // Filter empty rows
+
+        setSampleCsvData(rows)
+      } catch (error) {
+        console.error('Failed to load CSV:', error)
+        toast.error('Failed to load CSV preview')
+      } finally {
+        setIsSampleLoading(false)
+      }
+    }
+  }
+
   // 0=Idle, 1=Uploading, 2=Processing, 3=Done
   const [processStep, setProcessStep] = useState(0)
 
@@ -80,9 +129,7 @@ const PDFtoCSV = () => {
 
   const isValidInvoiceFile = useCallback((file) => {
     const validTypes = [
-      'application/pdf',
-      'image/jpeg',
-      'image/jpg'
+      'application/pdf'
     ];
     return file && validTypes.includes(file.type);
   }, []);
@@ -342,9 +389,313 @@ const PDFtoCSV = () => {
     }
   }, [isUploading, isProcessing])
 
+  const [guidelinesOpen, setGuidelinesOpen] = useState(false)
+
   return (
     <Box sx={{ minHeight: "100vh", background: "#000", color: "#fff", position: 'relative' }}>
       <Toaster position="top-center" richColors theme="dark" />
+
+      {/* User Guidelines Button */}
+      <Button
+        onClick={() => setGuidelinesOpen(true)}
+        sx={{
+          position: 'fixed',
+          top: 20,
+          left: 20,
+          zIndex: 1000,
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '20px',
+          padding: '8px 16px',
+          color: 'rgba(255, 255, 255, 0.7)',
+          fontSize: '0.875rem',
+          textTransform: 'none',
+          gap: 1,
+          '&:hover': {
+            background: 'rgba(255, 255, 255, 0.15)',
+            color: '#fff',
+            borderColor: 'rgba(255, 255, 255, 0.3)',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+          },
+          transition: 'all 0.3s ease'
+        }}
+      >
+        <HelpCircle size={16} />
+        User Guidelines
+      </Button>
+
+      {/* Guidelines Modal */}
+      <AnimatePresence>
+        {guidelinesOpen && (
+          <Box
+            component={motion.div}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(5px)',
+              zIndex: 2000,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              p: 2
+            }}
+            onClick={() => setGuidelinesOpen(false)}
+          >
+            <Box
+              component={motion.div}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              sx={{
+                background: 'rgba(10, 10, 10, 0.95)',
+                border: '1px solid rgba(142, 84, 247, 0.3)',
+                borderRadius: '24px',
+                width: '100%',
+                maxWidth: '800px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                position: 'relative'
+              }}
+            >
+              {/* Modal Header */}
+              <Box sx={{
+                p: { xs: 3, md: 4 },
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <Typography variant="h2" sx={{
+                  fontSize: '1.5rem',
+                  fontWeight: 700,
+                  background: 'linear-gradient(90deg, #fff, #a78bfa)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>
+                  Invoice to CSV Guide
+                </Typography>
+                <IconButton onClick={() => setGuidelinesOpen(false)} sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: '#fff' } }}>
+                  <X size={24} />
+                </IconButton>
+              </Box>
+
+              {/* Modal Body */}
+              <Box sx={{ p: { xs: 3, md: 4 } }}>
+                {/* Purpose */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography sx={{ color: '#8E54F7', fontSize: '1.1rem', fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box component="span" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'currentColor' }} />
+                    Purpose of this Tool
+                  </Typography>
+                  <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)', lineHeight: 1.7, pl: 3 }}>
+                    To automatically extract tables from PDF invoices and convert them into editable CSV files.
+                  </Typography>
+                </Box>
+
+                {/* Steps */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography sx={{ color: '#2579E3', fontSize: '1.1rem', fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box component="span" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'currentColor' }} />
+                    Steps to Use this Tool
+                  </Typography>
+                  <Box sx={{ pl: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {[
+                      'Drag and drop your PDF invoice into the upload area.',
+                      'Click the "Convert to CSV" button to start processing.',
+                      'Wait for the system to extract the table data.',
+                      'Review the filename and click "Download CSV" to save your data.'
+                    ].map((step, index) => (
+                      <Box key={index} sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{
+                          minWidth: 24, height: 24, borderRadius: '50%', bgcolor: 'rgba(37, 121, 227, 0.2)', color: '#2579E3',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem', fontWeight: 700, mt: 0.5
+                        }}>
+                          {index + 1}
+                        </Box>
+                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)', lineHeight: 1.7 }}>{step}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Limitations / Issues */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography sx={{ color: '#EF4444', fontSize: '1.1rem', fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box component="span" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'currentColor' }} />
+                    Important Limitations & Guidelines
+                  </Typography>
+                  <Box sx={{ pl: 3 }}>
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)', lineHeight: 1.7, mb: 2 }}>
+                      For accurate extraction, please ensure your files meet these criteria. The tool <strong>will not work correctly</strong> if:
+                    </Typography>
+                    <ul style={{ margin: 0, paddingLeft: 20, color: 'rgba(255,255,255,0.7)', lineHeight: 1.8 }}>
+                      <li style={{ marginBottom: 8 }}><strong>Text is overlapping:</strong> Ensure elements don't stack on top of each other.</li>
+                      <li style={{ marginBottom: 8 }}><strong>Misalignment:</strong> Tables or columns that are heavily skewed may result in shifted data.</li>
+                      <li style={{ marginBottom: 8 }}><strong>Unclear Text:</strong> Blurry documents or handwriting cannot be processed reliably. Clear, digital text is required.</li>
+                    </ul>
+                  </Box>
+                </Box>
+
+                {/* Outcome */}
+                <Box sx={{
+                  background: 'linear-gradient(45deg, rgba(37, 121, 227, 0.1), rgba(142, 84, 247, 0.1))',
+                  borderRadius: 4,
+                  p: 3,
+                  border: '1px solid rgba(255, 255, 255, 0.05)'
+                }}>
+                  <Typography sx={{ color: '#fff', fontSize: '1.1rem', fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <span style={{ fontSize: '1.2rem' }}>✨</span>
+                    Expected Outcome
+                  </Typography>
+                  <Typography sx={{ color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.7 }}>
+                    A downloadable CSV file containing the extracted tables from your invoice, ready for import into Excel or Google Sheets.
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        )}
+      </AnimatePresence>
+
+      {/* Sample Preview Modal */}
+      <AnimatePresence>
+        {sampleModalOpen && (
+          <Box
+            component={motion.div}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(0, 0, 0, 0.9)',
+              backdropFilter: 'blur(5px)',
+              zIndex: 2000,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              p: { xs: 2, md: 4 }
+            }}
+            onClick={() => setSampleModalOpen(false)}
+          >
+            <Box
+              component={motion.div}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              sx={{
+                background: '#111',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '16px',
+                width: '100%',
+                maxWidth: '1000px',
+                height: '85vh',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Modal Header */}
+              <Box sx={{
+                p: 2,
+                px: 3,
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                bgcolor: '#0a0a0a'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {sampleType === 'pdf' ? <FileText color="#2579E3" /> : <FileSpreadsheet color="#8E54F7" />}
+                  <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
+                    {sampleType === 'pdf' ? 'Sample Invoice Preview' : 'Generated CSV Preview'}
+                  </Typography>
+                </Box>
+                <IconButton onClick={() => setSampleModalOpen(false)} sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: '#fff' } }}>
+                  <X size={24} />
+                </IconButton>
+              </Box>
+
+              {/* Modal Body */}
+              <Box sx={{ flex: 1, overflow: 'hidden', bgcolor: '#000', position: 'relative' }}>
+                {sampleType === 'pdf' ? (
+                  <iframe
+                    src={sampleUrl}
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                    title="PDF Preview"
+                  />
+                ) : (
+                  <Box sx={{ height: '100%', overflow: 'auto', p: 3 }}>
+                    {isSampleLoading ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                        <CircularProgress sx={{ color: '#8E54F7' }} />
+                      </Box>
+                    ) : (
+                      <TableContainer component={Paper} sx={{ bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2 }}>
+                        <Table size="small" aria-label="csv preview table">
+                          <TableHead>
+                            <TableRow sx={{ bgcolor: 'rgba(142, 84, 247, 0.2)' }}>
+                              {sampleCsvData[0]?.map((header, index) => (
+                                <TableCell key={index} sx={{ color: '#fff', fontWeight: 600, borderColor: 'rgba(255,255,255,0.1)' }}>
+                                  {header}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {sampleCsvData.slice(1).map((row, rowIndex) => (
+                              <TableRow key={rowIndex} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                {row.map((cell, cellIndex) => (
+                                  <TableCell key={cellIndex} sx={{ color: 'rgba(255,255,255,0.8)', borderColor: 'rgba(255,255,255,0.1)' }}>
+                                    {cell}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </Box>
+                )}
+              </Box>
+
+              {/* Modal Footer */}
+              <Box sx={{ p: 2, borderTop: '1px solid rgba(255, 255, 255, 0.1)', bgcolor: '#0a0a0a', display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  href={sampleUrl}
+                  download={sampleUrl.split('/').pop().split('?')[0]}
+                  variant="contained"
+                  startIcon={<Download size={18} />}
+                  sx={{
+                    bgcolor: sampleType === 'pdf' ? '#2579E3' : '#8E54F7',
+                    '&:hover': { bgcolor: sampleType === 'pdf' ? '#1e6bb8' : '#7c3aed' }
+                  }}
+                >
+                  Download File
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        )}
+      </AnimatePresence>
+
       {/* Background Gradient */}
       <Box
         sx={{
@@ -388,7 +739,7 @@ const PDFtoCSV = () => {
             mx: 'auto',
             lineHeight: 1.6
           }}>
-            Convert your PDF and image invoices to CSV format quickly and easily
+            Convert your PDF invoices to CSV format quickly and easily
           </Typography>
         </Box>
 
@@ -482,7 +833,7 @@ const PDFtoCSV = () => {
             <input
               id="file-input"
               type="file"
-              accept=".pdf,.jpg,.jpeg"
+              accept=".pdf"
               onChange={handleFileInput}
               style={{ display: 'none' }}
               disabled={isUploading || isProcessing}
@@ -530,10 +881,10 @@ const PDFtoCSV = () => {
                   Upload Invoice
                 </Typography>
                 <Typography sx={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.8)', mb: 4, lineHeight: 1.6 }}>
-                  Drag and drop a PDF or image invoice here, or <span style={{ color: '#3B82F6', textDecoration: 'underline' }}>browse files</span>
+                  Drag and drop a PDF invoice here, or <span style={{ color: '#3B82F6', textDecoration: 'underline' }}>browse files</span>
                 </Typography>
                 <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.2)', pt: 3, textAlign: 'center' }}>
-                  <Typography sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>• PDF or JPEG/JPG files • Max 20MB</Typography>
+                  <Typography sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)' }}>• PDF files • Max 20MB</Typography>
                 </Box>
               </>
             )}
@@ -687,6 +1038,110 @@ const PDFtoCSV = () => {
           </Box>
         </Box>
 
+        {/* See it in action Section */}
+        <Box sx={{ mt: 8 }}>
+          <Typography sx={{
+            textAlign: 'center',
+            color: 'rgba(255, 255, 255, 0.6)',
+            fontSize: 14,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            mb: 3
+          }}>
+            See it in action
+          </Typography>
+
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 3
+          }}>
+            {/* Sample Input */}
+            <Box sx={{
+              background: 'rgba(37, 121, 227, 0.1)',
+              border: '1px solid rgba(37, 121, 227, 0.3)',
+              borderRadius: 4,
+              p: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'all 0.2s',
+              '&:hover': {
+                background: 'rgba(37, 121, 227, 0.15)',
+                borderColor: 'rgba(37, 121, 227, 0.5)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+              onClick={() => handleViewSample('pdf', '/samples/sample_invoice.PDF?v=3')}
+            >
+              <Typography sx={{ color: '#2579E3', fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FileText size={18} /> Input Invoice
+              </Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, textAlign: 'center', mb: 3, flex: 1 }}>
+                Click to preview the sample PDF invoice
+              </Typography>
+
+              <IconButton
+                component="a"
+                href="/samples/sample_invoice.PDF?v=3"
+                download="sample_invoice.PDF"
+                onClick={(e) => e.stopPropagation()}
+                sx={{
+                  color: '#2579E3',
+                  border: '1px solid rgba(37, 121, 227, 0.5)',
+                  '&:hover': { background: 'rgba(37, 121, 227, 0.2)', borderColor: '#2579E3' }
+                }}
+              >
+                <Download size={20} />
+              </IconButton>
+            </Box>
+
+            {/* Sample Output */}
+            <Box sx={{
+              background: 'rgba(142, 84, 247, 0.1)',
+              border: '1px solid rgba(142, 84, 247, 0.3)',
+              borderRadius: 4,
+              p: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'all 0.2s',
+              '&:hover': {
+                background: 'rgba(142, 84, 247, 0.15)',
+                borderColor: 'rgba(142, 84, 247, 0.5)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+              onClick={() => handleViewSample('csv', '/samples/sample_output.csv')}
+            >
+              <Typography sx={{ color: '#8E54F7', fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FileSpreadsheet size={18} /> Generated Result
+              </Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, textAlign: 'center', mb: 3, flex: 1 }}>
+                Click to preview the generated CSV content
+              </Typography>
+
+              <IconButton
+                component="a"
+                href="/samples/sample_output.csv"
+                download="sample_output.csv"
+                onClick={(e) => e.stopPropagation()}
+                sx={{
+                  color: '#8E54F7',
+                  border: '1px solid rgba(142, 84, 247, 0.5)',
+                  '&:hover': { background: 'rgba(142, 84, 247, 0.2)', borderColor: '#8E54F7' }
+                }}
+              >
+                <Download size={20} />
+              </IconButton>
+            </Box>
+          </Box>
+        </Box>
 
       </Container>
 
