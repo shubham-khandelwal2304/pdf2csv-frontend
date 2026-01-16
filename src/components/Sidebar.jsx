@@ -20,7 +20,7 @@ const Sidebar = ({ isOpen, onToggle, onFileSelect }) => {
     try {
       const apiBase = import.meta.env.VITE_API_BASE || 'https://csv-backend-oyvb.onrender.com';
 
-      // Add timeout and abort controller for better performance
+      // Add timeout and abort controller for a better performance
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for initial load
 
