@@ -1075,7 +1075,7 @@ const PDFtoCSV = () => {
                 transform: 'translateY(-2px)'
               }
             }}
-              onClick={() => handleViewSample('pdf', '/samples/sample_invoice.PDF?v=3')}
+              onClick={() => handleViewSample('pdf', '/samples/sample_invoice.pdf?v=3')}
             >
               <Typography sx={{ color: '#2579E3', fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <FileText size={18} /> Input Invoice
@@ -1086,8 +1086,8 @@ const PDFtoCSV = () => {
 
               <IconButton
                 component="a"
-                href="/samples/sample_invoice.PDF?v=3"
-                download="sample_invoice.PDF"
+                href="/samples/sample_invoice.pdf?v=3"
+                download="sample_invoice.pdf"
                 onClick={(e) => e.stopPropagation()}
                 sx={{
                   color: '#2579E3',
